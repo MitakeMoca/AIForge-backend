@@ -9,4 +9,9 @@ class Tag(BaseModel):
 
     class Meta:
         table = "tag"
-        
+
+    @staticmethod
+    async def get_by_name(tag_name: str):
+        # 获取Tag表中通过tag_name查询到的标签
+        tag = await Tag.filter(tag_name=tag_name).first()
+        return tag
