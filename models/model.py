@@ -1,8 +1,8 @@
 from tortoise.exceptions import DoesNotExist
 from tortoise import fields, models
-from typing import List
+from typing import List, Optional
 
-from models import Tag
+from models import tag
 
 
 class Model(models.Model):

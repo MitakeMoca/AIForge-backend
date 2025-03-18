@@ -1,3 +1,4 @@
+from .basemodel import BaseModel
 from .dataset import Dataset
 from .hypara import Hypara
 from .model import Model
