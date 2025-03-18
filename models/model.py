@@ -2,6 +2,8 @@ from tortoise.exceptions import DoesNotExist
 from tortoise import fields, models
 from typing import List
 
+from models import Tag
+
 
 class Model(models.Model):
     id = fields.IntField(pk=True)
@@ -136,3 +138,80 @@ class Model(models.Model):
         if model:
             return [tag.tag_name for tag in model.tags]
         return []
+
+    # 获取公开模型路径
+    @classmethod
+    async def find_public_model_path_by_id(cls, model_id: int) -> Optional[str]:
+        model = await cls.filter(id=model_id, pub=1).first()
+        return model.model_path if model else None
+
+    # 根据 tag_name 获取模型列表（JOIN tag_model -> 模拟通过 Tag 关联）
+    @classmethod
+    async def get_models_by_tag_name(cls, tag_name: str) -> List['Model']:
+        tag = await Tag.get_by_name(tag_name)
+        if not tag:
+            return []
+        # 假设有 tag_model 中间表 (手动写 JOIN)，但我们可以直接查询
+        from tortoise.transactions import in_transaction
+        query = """
+            SELECT m.* FROM model m
+            JOIN tag_model tm ON m.id = tm.model_id
+            WHERE tm.tag_id = %s
+        """
+        async with in_transaction() as conn:
+            rows = await conn.execute_query_dict(query, [tag.tag_id])
+        models_list = [await cls.get(id=row['id']) for row in rows]
+        return models_list
+
+    # 判断模型是否属于用户
+    @classmethod
+    async def is_model_belongs_to_user(cls, user_id: str, model_id: int) -> bool:
+        return await cls.filter(id=model_id, user_id=user_id).exists()
+
+    # 获取指定用户的所有模型
+    @classmethod
+    async def get_models_by_user_id(cls, user_id: str) -> List['Model']:
+        return await cls.filter(user_id=user_id).all()
+
+    # 模型名称模糊搜索 (公开模型)
+    @classmethod
+    async def fuzzy_search_by_name(cls, model_name: str) -> List['Model']:
+        return await cls.filter(model_name__icontains=model_name, pub=1).all()
+
+    # 模型架构模糊搜索 (公开模型)
+    @classmethod
+    async def fuzzy_search_by_frame(cls, model_architecture: str) -> List['Model']:
+        return await cls.filter(frame__icontains=model_architecture, pub=1).all()
+
+    # 模型描述模糊搜索 (公开模型)
+    @classmethod
+    async def fuzzy_search_by_description(cls, model_description: str) -> List['Model']:
+        return await cls.filter(model_description__icontains=model_description, pub=1).all()
+
+    # 获取 HyparaPath
+    @classmethod
+    async def get_hypara_path_by_model_id(cls, model_id: int) -> Optional[str]:
+        model = await cls.filter(id=model_id).first()
+        return model.hypara_path if model else None
+
+    # 给模型添加标签
+    @classmethod
+    async def add_tag_to_model(cls, model_id: int, tag_name: str) -> bool:
+        # 查找 Tag 表中是否有对应 tag
+        tag = await Tag.get_by_name(tag_name)
+        if not tag:
+            return False
+        # 模拟原 tag_model 表插入 (可以通过直接插入字符串 tag 字段)
+        model = await cls.get_or_none(id=model_id)
+        if not model:
+            return False
+        # 更新 model.tag 字段，假设逗号分隔
+        if model.tag:
+            tag_list = model.tag.split(",")
+            if tag_name not in tag_list:
+                tag_list.append(tag_name)
+            model.tag = ",".join(tag_list)
+        else:
+            model.tag = tag_name
+        await model.save()
+        return True
