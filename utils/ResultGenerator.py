@@ -16,7 +16,7 @@ class ResultGenerator:
     def gen_success_result(message: str = DEFAULT_SUCCESS_MESSAGE, data: Optional[Any] = None) -> dict:
         """ 生成成功的响应 """
         return {
-            "result_code": ResultGenerator.RESULT_CODE_SUCCESS,
+            "resultCode": ResultGenerator.RESULT_CODE_SUCCESS,
             "message": message,
             "data": data
         }
@@ -25,7 +25,7 @@ class ResultGenerator:
     def gen_fail_result(message: str = DEFAULT_FAIL_MESSAGE, data: Optional[Any] = None) -> dict:
         """ 生成失败的响应 """
         return {
-            "result_code": ResultGenerator.RESULT_CODE_SERVER_ERROR,
+            "resultCode": ResultGenerator.RESULT_CODE_SERVER_ERROR,
             "message": message,
             "data": data
         }
@@ -34,7 +34,7 @@ class ResultGenerator:
     def gen_error_result(code: int, message: str) -> dict:
         """ 生成自定义错误码的响应 """
         return {
-            "result_code": code,
+            "resultCode": code,
             "message": message,
             "data": None
         }
@@ -43,7 +43,7 @@ class ResultGenerator:
     def gen_not_found_result(message: str = DEFAULT_NOT_FOUND_MESSAGE, data: Optional[Any] = None) -> dict:
         """ 生成未找到的响应 """
         return {
-            "result_code": ResultGenerator.RESULT_CODE_NOT_FOUND,
+            "resultCode": ResultGenerator.RESULT_CODE_NOT_FOUND,
             "message": message,
             "data": data
         }

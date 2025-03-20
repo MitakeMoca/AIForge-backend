@@ -5,6 +5,7 @@ import string
 from fastapi import APIRouter, HTTPException
 
 from models import User
+from utils.ResultGenerator import ResultGenerator
 
 user = APIRouter()
 verification_codes: Dict[str, str] = {}
@@ -66,10 +67,55 @@ async def register_by_email(params: UserRegister):
         raise HTTPException(status_code=400, detail="验证码无效或已过期")
 
     # 创建用户
-    user = User(user_id=user_id, username=f"用户_{user_id}", email=email, password=password)
-
+    user_dict = {
+        'user_id': user_id,
+        'username': f"用户_{user_id}",
+        'email': email,
+        'password': password,
+    }
     # 注册用户到数据库
-    new_user = User.add_user(user.dict())
+    new_user = await User.add_user(user_dict)
 
     # 返回注册成功结果
-    return {"status": "success", "user": new_user}
+    return ResultGenerator.gen_success_result(data=user_dict)
+
+
+@user.get('/{user_id}/{password}')
+async def login(user_id: str, password: str):
+    user_dict = {
+        'user_id': user_id,
+        'password': password
+    }
+
+    print(user_dict)
+
+    # 获取用户数据
+    user_list = [await User.find_by_id(user_id)]
+    print(user_list)
+
+    if user_list[0] is None:
+        user_list = [await User.find_by_email(user_id)]
+
+    if len(user_list) != 0:
+        if user_list[0].password == password:
+            return ResultGenerator.gen_success_result(data={"user_id": user_list[0].user_id, "email": user_list[0].email})
+        else:
+            return ResultGenerator.gen_fail_result("密码错误")
+
+    return ResultGenerator.gen_fail_result("无用户")
+
+
+# 获取全部用户
+@user.get('/')
+async def get_all_users():
+    # todo: 这里还没有用 ResultGenerator 包装
+    return await User.all_users()
+
+
+# 删除某个用户
+@user.delete('/{id}')
+async def delete_user_by_id(id: str):
+    ret = await User.delete_by_id(id)
+    if ret:
+        return ResultGenerator.gen_success_result(data="删除成功")
+    return ResultGenerator.gen_fail_result(data="用户名不存在")

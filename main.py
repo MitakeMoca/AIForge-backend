@@ -8,11 +8,6 @@ from routers.user import user
 app = FastAPI()
 app.include_router(user, prefix='/User', tags=['用户中心'])
 
-register_tortoise(
-    app=app,
-    config=TORTOISE_ORM,
-)
-
 origins = [
     '*'
 ]
@@ -23,6 +18,11 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["GET", "POST", "DELETE", "PUT"],
     allow_headers=["*"]
+)
+
+register_tortoise(
+    app=app,
+    config=TORTOISE_ORM,
 )
 
 

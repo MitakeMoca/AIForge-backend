@@ -1,3 +1,5 @@
+from dataclasses import asdict
+
 from tortoise import fields, models
 from tortoise.exceptions import DoesNotExist
 from typing import List, Optional
@@ -10,13 +12,18 @@ class User(models.Model):
     password = fields.CharField(max_length=255)
     level = fields.IntField(default=0)
     email = fields.CharField(max_length=255)
-    image_id = fields.CharField(max_length=255)
+    image_id = fields.CharField(max_length=255, default=0)
     admin = fields.IntField(default=0)
 
     favor_models = fields.ManyToManyField('models.Model', related_name='users', through='favor')
 
     class Meta:
         table = "user"
+
+    def dict(self):
+        result = {field: getattr(self, field) for field in self.__dict__ if not field.startswith('_')}
+        result.pop('favor_models', None)  # 移除密码字段
+        return result
 
     # 获取所有用户
     @staticmethod
