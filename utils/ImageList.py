@@ -4,6 +4,8 @@ from typing import List
 from fastapi import HTTPException
 import asyncio
 
+from utils.DockerCore import DockerCore
+
 
 class ImageList:
     image_list: List[str] = []
@@ -43,7 +45,7 @@ class ImageList:
             print(f"Error writing to file {pathname}: {e}")
 
     @classmethod
-    async def load_docker_images(cls, docker_core: "DockerCore") -> None:
+    async def load_docker_images(cls, docker_core: DockerCore) -> None:
         """ Loads images from a Docker instance into the image list """
         images = await docker_core.list_images()  # Assume list_images is async
         if images is not None:
