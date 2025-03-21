@@ -108,8 +108,8 @@ async def login(user_id: str, password: str):
 # 获取全部用户
 @user.get('/')
 async def get_all_users():
-    # todo: 这里还没有用 ResultGenerator 包装
-    return await User.all_users()
+    all_users = await User.all_users()
+    return ResultGenerator.gen_success_result(data=all_users)
 
 
 # 删除某个用户

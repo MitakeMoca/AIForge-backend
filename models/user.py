@@ -28,7 +28,8 @@ class User(models.Model):
     # 获取所有用户
     @staticmethod
     async def all_users() -> List["User"]:
-        return await User.all()
+        users = await User.all()
+        return users
 
     # 根据ID查询
     @staticmethod
