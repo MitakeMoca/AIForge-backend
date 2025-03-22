@@ -45,9 +45,9 @@ class ImageList:
             print(f"Error writing to file {pathname}: {e}")
 
     @classmethod
-    async def load_docker_images(cls, docker_core: DockerCore) -> None:
+    def load_docker_images(cls, docker_core: DockerCore) -> None:
         """ Loads images from a Docker instance into the image list """
-        images = await docker_core.list_images()  # Assume list_images is async
+        images = docker_core.list_images()  # Assume list_images is async
         if images is not None:
             for image in images:
                 cls.add_image(image if image else "untagged")

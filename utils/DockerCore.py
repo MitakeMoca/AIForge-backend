@@ -10,7 +10,7 @@ app = FastAPI()
 
 
 class DockerCore:
-    def __init__(self, docker_host: str = "tcp://localhost:2375g"):
+    def __init__(self, docker_host: str = "tcp://localhost:2375"):
         self.client = docker.DockerClient(base_url=docker_host)
         self.container_name_to_id = {}
         self.gpu_max = 0

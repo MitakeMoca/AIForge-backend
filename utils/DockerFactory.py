@@ -24,12 +24,12 @@ class DockerFactory:
         self.read_hosts(str(host_file))
 
     # 添加一个新的 Docker 客户端
-    async def add_new_docker_client(self, host: str) -> int:
+    def add_new_docker_client(self, host: str) -> int:
         """ Adds a new Docker client to the pool based on the provided host """
         if host:
             try:
                 docker_core = DockerCore(host)
-                await ImageList.load_docker_images(docker_core)  # Assuming async version
+                ImageList.load_docker_images(docker_core)  # Assuming async version
                 self.docker_client_pool[host] = docker_core
                 return 200
             except Exception as e:

@@ -49,7 +49,7 @@ async def add_model_service(model_dict: dict, model_file: UploadFile):
 
     try:
         project_root = os.getcwd()  # 获取当前工作目录
-        upload_dir = os.path.join(project_root, "data", "Model", model_id)
+        upload_dir = os.path.join(project_root, "data", "Model", str(model_id))
         upload_path = Path(upload_dir).resolve()
 
         # 保证要找的目录存在
@@ -80,7 +80,7 @@ async def add_model_service(model_dict: dict, model_file: UploadFile):
         # 使用 Docker 客户端构建镜像
         try:
             # 假设 create_docker_image 是一个同步操作
-            result = docker_core.build_image(model_id, str(upload_path))
+            result = await docker_core.build_image(model_id, str(upload_path))
             if not result:
                 return ResultGenerator.gen_fail_result(message="创建镜像失败")
         except Exception as e:

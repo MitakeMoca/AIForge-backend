@@ -2,7 +2,7 @@ from tortoise.exceptions import DoesNotExist
 from tortoise import fields, models
 from typing import List, Optional
 
-from models import tag
+from .tag import Tag
 
 
 class Model(models.Model):
@@ -16,7 +16,7 @@ class Model(models.Model):
     frame = fields.CharField(max_length=255)
     image_id = fields.IntField()
     pub = fields.IntField()
-    model_path = fields.CharField(max_length=255)
+    model_path = fields.CharField(max_length=255, default='')
     user_id = fields.CharField(max_length=255)
     hypara_path = fields.CharField(max_length=255)
     tag = fields.CharField(max_length=255)

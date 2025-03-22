@@ -2,5 +2,9 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/data/Model/2/LeNet5-MNIST-PyTorch" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/data/Model/3/LeNet5-MNIST-PyTorch" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/data/Model/4/LeNet5-MNIST-PyTorch" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/data/Model/5/LeNet5-MNIST-PyTorch" vcs="Git" />
   </component>
 </project>
