@@ -215,3 +215,7 @@ class Model(models.Model):
             model.tag = tag_name
         await model.save()
         return True
+
+    async def update_model_path(self, model_path: str):
+        self.model_path = model_path
+        await self.save()

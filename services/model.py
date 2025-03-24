@@ -31,7 +31,8 @@ async def add_model_service(model_dict: dict, model_file: UploadFile):
         print("添加模型失败：用户不存在")
         return ResultGenerator.gen_fail_result(message="用户不存在")
 
-    model_id = (await Model.add_model(model_dict)).id
+    model = await Model.add_model(model_dict)
+    model_id = model.id
     if model_id is None:
         return ResultGenerator.gen_fail_result(message="添加模型失败，无法获取新的 model id")
     model_dict['model_id'] = model_id
@@ -64,8 +65,11 @@ async def add_model_service(model_dict: dict, model_file: UploadFile):
         # 删除 zip 文件
         os.remove(zip_file_path)
 
+        await model.update_model_path(str(upload_path))
+
         # 检查有没有 Dockerfile
         dockerfile_path = upload_path / model_file.filename[:-4] / "Dockerfile"
+
         if not dockerfile_path.exists():
             await Model.delete_model(model_id)
             delete_directory(str(upload_path))
@@ -80,13 +84,13 @@ async def add_model_service(model_dict: dict, model_file: UploadFile):
         # 使用 Docker 客户端构建镜像
         try:
             # 假设 create_docker_image 是一个同步操作
-            result = await docker_core.build_image(model_id, str(upload_path))
+            result = await docker_core.build_image(str(model_id), str(upload_path))
             if not result:
                 return ResultGenerator.gen_fail_result(message="创建镜像失败")
         except Exception as e:
             await Model.delete_model(model_id)
             delete_directory(str(upload_path))
-            return ResultGenerator.gen_fail_result(message="创建镜像失败")
+            return ResultGenerator.gen_fail_result(message=f"创建镜像失败{e}")
     except Exception as e:
         await Model.delete_model(model_id)
         if os.path.exists(str(upload_path)):

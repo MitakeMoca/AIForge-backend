@@ -75,17 +75,21 @@ class DockerCore:
         return self.client.images.get(image_name) is not None
 
     async def build_image(self, image_name: str, dockerfile_path: str):
+        print('build', self._image_exists(image_name))
         if self._image_exists(image_name):
             return ResultGenerator.gen_fail_result(message="镜像已经存在")
         try:
+            print('build')
             output = []
             for chunk in self.client.api.build(path=dockerfile_path, tag=image_name, rm=True):
                 if isinstance(chunk, dict) and 'stream' in chunk:
                     output.append(chunk['stream'])
                 elif isinstance(chunk, dict) and 'error' in chunk:
                     raise Exception(chunk['error'])
+            print("moca", output, "ran")
             return "\n".join(output)
         except Exception as e:
+            print(f"镜像创建失败{e}")
             return ResultGenerator.gen_fail_result(message=f"镜像创建失败{e}")
 
     async def check_container_status(self, container_name: str) -> str:
