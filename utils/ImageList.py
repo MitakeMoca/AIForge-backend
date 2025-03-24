@@ -1,53 +1,52 @@
-import docker
 import os
-from typing import List
-from fastapi import HTTPException
-import asyncio
-
-from utils.DockerCore import DockerCore
 
 
 class ImageList:
-    image_list: List[str] = []
+    # 静态变量：保存镜像列表
+    image_list = []
 
-    @classmethod
-    def add_image(cls, image: str) -> None:
-        """ Adds a Docker image to the list """
-        if image and image not in cls.image_list:
-            cls.image_list.append(image)
+    # 添加镜像
+    @staticmethod
+    def add_image(image):
+        if image and image.strip():  # 确保 image 不为空或空白
+            ImageList.image_list.append(image)
 
-    @classmethod
-    def remove_image(cls, image: str) -> bool:
-        """ Removes a Docker image from the list """
-        if image in cls.image_list:
-            cls.image_list.remove(image)
+    # 移除镜像
+    @staticmethod
+    def remove_image(image):
+        if image in ImageList.image_list:
+            ImageList.image_list.remove(image)
             return True
         return False
 
-    @classmethod
-    def get_images(cls) -> List[str]:
-        """ Returns a copy of the image list """
-        return cls.image_list.copy()
+    # 获取镜像列表
+    @staticmethod
+    def get_images():
+        return list(ImageList.image_list)  # 返回一个副本以保护内部状态
 
-    @classmethod
-    def search_image(cls, image_name: str) -> bool:
-        """ Searches for a specific image in the list """
-        return image_name in cls.image_list
+    # 搜索镜像
+    @staticmethod
+    def search_image(image_name):
+        return image_name in ImageList.image_list
 
-    @classmethod
-    async def list_to_string(cls, pathname: str = "./resources/image.txt") -> None:
-        """ Saves the image list to a file """
-        try:
-            with open(pathname, 'w') as file:
-                for image in cls.image_list:
-                    file.write(f"{image}\n")
-        except Exception as e:
-            print(f"Error writing to file {pathname}: {e}")
+    # 将镜像列表写入文件
+    @staticmethod
+    def list_to_string(pathname=None):
+        if pathname is None:
+            pathname = './resource/image.txt'
 
-    @classmethod
-    def load_docker_images(cls, docker_core: DockerCore) -> None:
-        """ Loads images from a Docker instance into the image list """
-        images = docker_core.list_images()  # Assume list_images is async
-        if images is not None:
-            for image in images:
-                cls.add_image(image if image else "untagged")
+        # 创建目录（如果不存在）
+        os.makedirs(os.path.dirname(pathname), exist_ok=True)
+
+        with open(pathname, 'w') as writer:
+            for image in ImageList.image_list:
+                writer.write(image + '\n')
+
+    # 从 DockerCore 读取镜像并加载
+    @staticmethod
+    def load_docker_images(docker_core):
+        images = docker_core.list_images()
+        if not images:
+            return
+        for image in images:
+            ImageList.add_image(image if image.strip() else "untagged")

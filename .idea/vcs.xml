@@ -6,6 +6,9 @@
     <mapping directory="$PROJECT_DIR$/data/Model/23/LeNet5-MNIST-PyTorch" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/data/Model/3/LeNet5-MNIST-PyTorch" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/data/Model/4/LeNet5-MNIST-PyTorch" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/data/Model/49/LeNet5-MNIST-PyTorch" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/data/Model/5/LeNet5-MNIST-PyTorch" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/data/Model/52/LeNet5-MNIST-PyTorch" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/data/Model/53/LeNet5-MNIST-PyTorch" vcs="Git" />
   </component>
 </project>

@@ -3,6 +3,7 @@ import shutil
 import zipfile
 from pathlib import Path
 
+import docker
 from fastapi import UploadFile
 
 from models import Model, User
@@ -69,12 +70,14 @@ async def add_model_service(model_dict: dict, model_file: UploadFile):
 
         # 检查有没有 Dockerfile
         dockerfile_path = upload_path / model_file.filename[:-4] / "Dockerfile"
+        dockerfile_dir = upload_path / model_file.filename[:-4]
 
         if not dockerfile_path.exists():
             await Model.delete_model(model_id)
             delete_directory(str(upload_path))
             return ResultGenerator.gen_fail_result(message="Dockerfile not found")
 
+        print(docker_factory.docker_client_pool)
         docker_core = docker_factory.docker_client_pool.get("tcp://localhost:2375")
         if not docker_core:
             await Model.delete_model(model_id)
@@ -84,7 +87,8 @@ async def add_model_service(model_dict: dict, model_file: UploadFile):
         # 使用 Docker 客户端构建镜像
         try:
             # 假设 create_docker_image 是一个同步操作
-            result = await docker_core.build_image(str(model_id), str(upload_path))
+            print('start build')
+            result = await docker_core.image_creator(str(model_id), str(dockerfile_dir))
             if not result:
                 return ResultGenerator.gen_fail_result(message="创建镜像失败")
         except Exception as e:

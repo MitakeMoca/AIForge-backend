@@ -207,7 +207,7 @@ class Model(models.Model):
             return False
         # 更新 model.tag 字段，假设逗号分隔
         if model.tag:
-            tag_list = model.tag.split(",")
+            tag_list = str(model.tag).split(",")
             if tag_name not in tag_list:
                 tag_list.append(tag_name)
             model.tag = ",".join(tag_list)
