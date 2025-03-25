@@ -98,7 +98,8 @@ async def login(user_id: str, password: str):
 
     if len(user_list) != 0:
         if user_list[0].password == password:
-            return ResultGenerator.gen_success_result(data={"user_id": user_list[0].user_id, "email": user_list[0].email})
+            return ResultGenerator.gen_success_result(
+                data={"user_id": user_list[0].user_id, "email": user_list[0].email})
         else:
             return ResultGenerator.gen_fail_result("密码错误")
 
@@ -119,3 +120,9 @@ async def delete_user_by_id(id: str):
     if ret:
         return ResultGenerator.gen_success_result(data="删除成功")
     return ResultGenerator.gen_fail_result(data="用户名不存在")
+
+
+@user.get('/{id}')
+async def get_all_users(id: str):
+    all_users = await User.find_by_id(id)
+    return ResultGenerator.gen_success_result(data=all_users)

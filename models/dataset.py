@@ -14,6 +14,7 @@ class Dataset(Model):
     user_id = fields.CharField(max_length=255)  # UserId
     introduction = fields.TextField()  # Introduction
     public = fields.IntField(default=0)  # Public，默认为0
+    likes = fields.IntField(default=0)
     models = fields.ManyToManyField('models.Model', related_name='datasets', through='md')
 
     class Meta:
