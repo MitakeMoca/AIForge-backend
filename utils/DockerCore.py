@@ -88,10 +88,10 @@ class DockerCore:
 
                 self._build_image(dockerfile_dir, image_name)
 
-                return 200  # 返回成功状态
+                return ResultGenerator.gen_success_result(message="镜像创建成功")  # 返回成功状态
             except Exception as e:
                 print(f"镜像创建失败: {e}")
-                return 500
+                return ResultGenerator.gen_success_result(message=f"镜像创建失败{e}")
 
     def _build_image(self, dockerfile_dir, image_name):
         """构建镜像的具体过程"""

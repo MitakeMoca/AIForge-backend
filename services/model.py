@@ -88,7 +88,7 @@ async def add_model_service(model_dict: dict, model_file: UploadFile):
         try:
             # 假设 create_docker_image 是一个同步操作
             print('start build')
-            result = await docker_core.image_creator(str(model_id), str(dockerfile_dir))
+            result = docker_core.image_creator(str(model_id), str(dockerfile_dir))
             if not result:
                 return ResultGenerator.gen_fail_result(message="创建镜像失败")
         except Exception as e:
