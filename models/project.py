@@ -17,25 +17,25 @@ class Project(BaseModel):
     project_name = fields.CharField(max_length=255)
     description = fields.TextField()
     user_id = fields.CharField(max_length=255)
-    status = fields.CharField(max_length=100)
+    status = fields.CharField(max_length=100, default="")
     create_time = fields.DatetimeField(auto_now_add=True)
     update_time = fields.DatetimeField(auto_now=True)
     visibility = fields.CharField(max_length=100)
     model_id = fields.IntField()
     train_dataset_id = fields.IntField()
     test_dataset_id = fields.IntField()
-    store_path = fields.CharField(max_length=255)
+    store_path = fields.CharField(max_length=255, default="")
     project_type = fields.CharField(max_length=100)
 
     class Meta:
         table = "project"
 
     @staticmethod
-    async def add_project(project: 'Project'):
-        project.create_time = datetime.now()
-        project.update_time = datetime.now()
-        await project.save()
-        return {"project_id": project.project_id}
+    async def add_project(project: dict):
+        project['create_time'] = datetime.now()
+        project['update_time'] = datetime.now()
+        project = await Project.create(**project)
+        return project
 
     @staticmethod
     async def find_all():
