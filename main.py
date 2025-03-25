@@ -8,6 +8,7 @@ from routers.hypara import hypara
 from routers.model import model_service
 from routers.dataset import dataset
 from routers.pic import pic
+from routers.tags import tag
 
 app = FastAPI()
 app.include_router(user, prefix='/User', tags=['用户中心'])
@@ -15,6 +16,7 @@ app.include_router(hypara, prefix='/Hypara', tags=['超参数管理'])
 app.include_router(model_service, prefix='/Model', tags=['模型服务'])
 app.include_router(dataset, prefix='/Dataset', tags=['数据集管理'])
 app.include_router(pic, prefix='/Pic', tags=['图像管理'])
+app.include_router(tag, prefix='/Tags', tags=['标签管理'])
 
 
 origins = [
