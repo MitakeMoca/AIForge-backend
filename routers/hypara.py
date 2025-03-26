@@ -1,6 +1,7 @@
 import json
 import os
 import uuid
+from typing import Dict
 
 from fastapi import APIRouter, HTTPException
 from datetime import datetime
@@ -64,3 +65,28 @@ async def get_hypara_by_project(project_id: int):
 async def get_hypara_by_model(model_id: int):
     hyparas = await get_hypara_by_model_service(model_id)
     return ResultGenerator.gen_success_result(data=hyparas)
+
+
+class HyparaParams(BaseModel):
+    params: dict
+
+
+@hypara.post('/add/{project_id}')
+async def add_hypara(project_id: int, params: HyparaParams):
+    params = params.params
+    store_path = os.getcwd()
+    store_dir = os.path.join(store_path, "data", "Hypara", "project")
+    store_path = str(store_dir) + f'/{project_id}.json'
+    if not os.path.exists(store_dir):
+        os.makedirs(store_dir)
+    if os.path.exists(store_path):
+        os.remove(store_path)
+
+    try:
+        with open(store_path, 'w', encoding='utf-8') as file:
+            json.dump(params, file, ensure_ascii=False, indent=4)
+    except Exception as e:
+        return ResultGenerator.gen_error_result(code=500, message=f"保存文件失败: {e}")
+
+    hypara = await Hypara.create(project_id=project_id, store_path=store_path)
+    return ResultGenerator.gen_success_result(message="超参数添加成功")

@@ -53,3 +53,27 @@ async def add_project(request: ProjectCreateRequest):
 async def get_project(project_id: str):
     project = await Project.get(project_id=project_id)
     return ResultGenerator.gen_success_result(data=project)
+
+
+@project.post('/projectType/{project_id}/{project_type}')
+async def update_project_type(project_id: int, project_type: str):
+    await Project.update_project_type_by_id(project_id, project_type)
+    return ResultGenerator.gen_success_result(message="修改项目类型成功")
+
+
+@project.post('/model/{project_id}/{model_id}')
+async def update_project_model(project_id: int, model_id: int):
+    await Project.update_model_id_by_id(project_id, model_id)
+    return ResultGenerator.gen_success_result(message="设置项目模型成功")
+
+
+@project.post('/train_dataset/{project_id}/{dataset_id}')
+async def update_train_dataset(project_id: int, dataset_id: int):
+    await Project.update_train_dataset_id_by_id(project_id, dataset_id)
+    return ResultGenerator.gen_success_result(message="设置项目训练集成功")
+
+
+@project.post('/test_dataset/{project_id}/{dataset_id}')
+async def update_test_dataset(project_id: int, dataset_id: int):
+    await Project.update_test_dataset_id_by_id(project_id, dataset_id)
+    return ResultGenerator.gen_success_result(message="设置项目测试集成功")
