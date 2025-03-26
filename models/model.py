@@ -148,20 +148,8 @@ class Model(models.Model):
     # 根据 tag_name 获取模型列表（JOIN tag_model -> 模拟通过 Tag 关联）
     @classmethod
     async def get_models_by_tag_name(cls, tag_name: str) -> List['Model']:
-        tag = await Tag.get_by_name(tag_name)
-        if not tag:
-            return []
-        # 假设有 tag_model 中间表 (手动写 JOIN)，但我们可以直接查询
-        from tortoise.transactions import in_transaction
-        query = """
-            SELECT m.* FROM model m
-            JOIN tag_model tm ON m.id = tm.model_id
-            WHERE tm.tag_id = %s
-        """
-        async with in_transaction() as conn:
-            rows = await conn.execute_query_dict(query, [tag.tag_id])
-        models_list = [await cls.get(id=row['id']) for row in rows]
-        return models_list
+        models = await Model.filter(tag__icontains=tag_name).all()
+        return models
 
     # 判断模型是否属于用户
     @classmethod

@@ -1,3 +1,4 @@
+import json
 import os
 import shutil
 import zipfile
@@ -9,6 +10,7 @@ from fastapi import UploadFile
 from models import Model, User
 from utils.DockerFactory import DockerFactory
 from utils.ResultGenerator import ResultGenerator
+
 docker_factory = DockerFactory()
 
 
@@ -103,3 +105,18 @@ async def add_model_service(model_dict: dict, model_file: UploadFile):
 
     await Model.add_tag_to_model(model_dict['model_id'], model_dict['tag'])
     return ResultGenerator.gen_success_result(message='模型上传成功')
+
+
+async def get_hypara_by_model_service(model_id: int):
+    path = await Model.get_hypara_path_by_model_id(model_id)
+    if not os.path.exists(path):
+        return ResultGenerator.gen_fail_result(message='路径不存在')
+
+    result = {}
+    try:
+        with open(path, 'r', encoding='utf-8') as file:
+            result = json.load(file)
+    except Exception as e:
+        return ResultGenerator.gen_fail_result(message=f'读取文件失败{e}')
+
+    return result

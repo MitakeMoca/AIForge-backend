@@ -8,6 +8,7 @@ from pydantic import BaseModel
 
 from models import Hypara
 from utils.ResultGenerator import ResultGenerator
+from services.model import get_hypara_by_model_service
 
 hypara = APIRouter()
 
@@ -56,4 +57,10 @@ async def create_hypara_field(hyperparameters: Hyperparameters):
 @hypara.get('/getHyparaByProjectId/{project_id}')
 async def get_hypara_by_project(project_id: int):
     hyparas = await Hypara.find_by_project_id(project_id)
+    return ResultGenerator.gen_success_result(data=hyparas)
+
+
+@hypara.get('/getHyparaPathByModelId/{model_id}')
+async def get_hypara_by_model(model_id: int):
+    hyparas = await get_hypara_by_model_service(model_id)
     return ResultGenerator.gen_success_result(data=hyparas)

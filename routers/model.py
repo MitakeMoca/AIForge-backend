@@ -73,3 +73,9 @@ async def find_all_waiting_model(model_id):
 async def get_models_by_user_id(user_id: str):
     models = await Model.get_models_by_user_id(user_id)
     return ResultGenerator.gen_success_result(data=models)
+
+
+@model_service.get('/getModelsByTagName/{tag_name}')
+async def get_models_id_by_tag(tag_name: str):
+    models = await Model.get_models_by_tag_name(tag_name)
+    return ResultGenerator.gen_success_result(data=models)
