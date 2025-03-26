@@ -95,12 +95,24 @@ def unzip_file(zip_file_path: Path, target_dir: Path):
         zip_ref.extractall(target_dir)
 
 
+@dataset.get('/public')
+async def get_public_datasets():
+    datasets = await models.Dataset.find_public_datasets()
+    return ResultGenerator.gen_success_result(data=datasets)
+
+
 @dataset.get('/')
 async def getAllDatasets():
     datasets = await models.Dataset.find_all()
     if not list:
         return ResultGenerator.gen_fail_result(message="没有找到任何数据集")
     return ResultGenerator.gen_success_result(data=datasets)
+
+
+@dataset.get('/{dataset_id}')
+async def get_dataset_by_id(dataset_id: str):
+    dataset = await models.Dataset.get(dataset_id=dataset_id)
+    return ResultGenerator.gen_success_result(data=dataset)
 
 
 @dataset.get('/findByUserId/{user_id}')

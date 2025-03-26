@@ -44,8 +44,12 @@ async def add_project(request: ProjectCreateRequest):
     project = await Project.add_project(project_dict)
     project_root = os.getcwd()
     upload_dir = os.path.join(project_root, "data", "Project", f"{project.project_id}")
-    project.storePath = upload_dir
+    await Project.filter(project_id=project.project_id).update(store_path=upload_dir)
+    project = await Project.get(project_id=project.project_id)
+    return ResultGenerator.gen_success_result(message="创建项目成功", data=project)
 
-    await project.save()
 
-    return ResultGenerator.gen_success_result(message="创建项目成功")
+@project.get('/{project_id}')
+async def get_project(project_id: str):
+    project = await Project.get(project_id=project_id)
+    return ResultGenerator.gen_success_result(data=project)

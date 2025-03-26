@@ -6,6 +6,7 @@ from fastapi import APIRouter, HTTPException
 from datetime import datetime
 from pydantic import BaseModel
 
+from models import Hypara
 from utils.ResultGenerator import ResultGenerator
 
 hypara = APIRouter()
@@ -51,3 +52,8 @@ async def create_hypara_field(hyperparameters: Hyperparameters):
     # 返回存储路径
     return ResultGenerator.gen_success_result(data={"storePath": store_path})
 
+
+@hypara.get('/getHyparaByProjectId/{project_id}')
+async def get_hypara_by_project(project_id: int):
+    hyparas = await Hypara.find_by_project_id(project_id)
+    return ResultGenerator.gen_success_result(data=hyparas)

@@ -17,7 +17,7 @@ class Project(BaseModel):
     project_name = fields.CharField(max_length=255)
     description = fields.TextField()
     user_id = fields.CharField(max_length=255)
-    status = fields.CharField(max_length=100, default="")
+    status = fields.CharField(max_length=100, default="init")
     create_time = fields.DatetimeField(auto_now_add=True)
     update_time = fields.DatetimeField(auto_now=True)
     visibility = fields.CharField(max_length=100)
