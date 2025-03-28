@@ -134,9 +134,9 @@ class Model(models.Model):
 
     @classmethod
     async def get_tags_by_model_id(cls, model_id: int):
-        model = await cls.get_or_none(id=model_id).prefetch_related('tags')
-        if model:
-            return [tag.tag_name for tag in model.tags]
+        model = await Model.get(id=model_id)
+        if model and model.tag:
+            return [tag.strip() for tag in model.tag.split(',') if tag.strip()]
         return []
 
     # 获取公开模型路径

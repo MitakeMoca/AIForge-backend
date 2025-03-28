@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 from tortoise import fields, models
 from tortoise.exceptions import DoesNotExist
 
@@ -27,5 +29,5 @@ class Hypara(models.Model):
             return True
         except DoesNotExist:
             # 如果没有该记录，则插入新记录
-            await cls.create(project_id=hypara.project_id, store_path=hypara.store_path)
+            await cls.create(hypara_id=str(uuid4()), project_id=hypara.project_id, store_path=hypara.store_path)
             return True

@@ -55,6 +55,40 @@ async def create_hypara_field(hyperparameters: Hyperparameters):
     return ResultGenerator.gen_success_result(data={"storePath": store_path})
 
 
+@hypara.get("/path/{store_path}")
+async def get_hypara_field_by_path(store_path: str):
+    hypara_fields = {}
+
+    # 读取 JSON 文件
+    try:
+        if not os.path.exists(store_path):
+            return ResultGenerator.gen_error_result(code=400, message="文件路径不存在")
+
+        with open(store_path, "r", encoding="utf-8") as json_file:
+            fields = json.load(json_file)
+
+        # 将字段列表放入 hyparaFields 中
+        hypara_fields = fields
+    except Exception as e:
+        return ResultGenerator.gen_error_result(code=500, message=f"获取超参数文件失败: {str(e)}")
+
+    return hypara_fields
+
+
+@hypara.get("/project/{project_id}")
+async def get_hypara_by_project_id(project_id: int):
+    hypara_paths = await Hypara.find_by_project_id(project_id)
+
+    all_hypara_fields = {}
+
+    # 遍历所有路径，获取超参数字段
+    for path in hypara_paths:
+        hypara_fields = await get_hypara_field_by_path(path)
+        all_hypara_fields.update(hypara_fields)
+    print(all_hypara_fields)
+    return ResultGenerator.gen_success_result(data=all_hypara_fields)
+
+
 @hypara.get('/getHyparaByProjectId/{project_id}')
 async def get_hypara_by_project(project_id: int):
     hyparas = await Hypara.find_by_project_id(project_id)
@@ -88,5 +122,5 @@ async def add_hypara(project_id: int, params: HyparaParams):
     except Exception as e:
         return ResultGenerator.gen_error_result(code=500, message=f"保存文件失败: {e}")
 
-    hypara = await Hypara.create(project_id=project_id, store_path=store_path)
+    hypara = await Hypara.create(hypara_id=str(uuid.uuid4()), project_id=project_id, store_path=store_path)
     return ResultGenerator.gen_success_result(message="超参数添加成功")

@@ -1,4 +1,5 @@
 import os
+from typing import Dict, Any, List
 
 from fastapi import APIRouter
 from pydantic import BaseModel
@@ -23,10 +24,61 @@ class ProjectCreateRequest(BaseModel):
         orm_mode = True
 
 
+class TreeNode:
+    def __init__(self, path: str, node_type: str, label: str, children: List['TreeNode'] = None):
+        self.path = path
+        self.type = node_type  # folder 或 file
+        self.label = label
+        self.children = children or []  # 如果没有提供子节点，默认为空列表
+
+    def __repr__(self):
+        return f"TreeNode(path={self.path}, type={self.type}, label={self.label}, children={self.children})"
+
+
 @project.get('/findByUserId/{user_id}')
 async def find_project_by_user(user_id: str):
     projects = await Project.find_by_user_id(user_id)
     return ResultGenerator.gen_success_result(data=projects)
+
+
+def build_file_tree(directory_path: str, project_id: int) -> TreeNode:
+    node = TreeNode(path=directory_path, node_type="folder", label=os.path.basename(directory_path))
+
+    children = []
+    try:
+        files = os.listdir(directory_path)
+        for file_name in files:
+            file_path = os.path.join(directory_path, file_name)
+            relative_path = file_path.split(f"project/{project_id}/", 1)[-1]
+
+            child_node = TreeNode(
+                path=relative_path,
+                node_type="folder" if os.path.isdir(file_path) else "file",
+                label=file_name
+            )
+
+            if os.path.isdir(file_path):
+                child_node.children = build_file_tree(file_path, project_id).children
+
+            children.append(child_node)
+    except PermissionError:
+        pass
+
+    node.children = children
+    return node
+
+
+@project.get("/tree/{project_id}", )
+async def get_tree(project_id: int):
+    project_root = os.getcwd()
+    path = os.path.join(project_root, "data", "Project", f"{project_id}")
+    # 检查路径是否存在
+    if not os.path.exists(path) or not os.path.isdir(path):
+        return ResultGenerator.gen_error_result(code=400, message="路径不存在或不是一个目录")
+
+    root_node = build_file_tree(path, project_id)
+
+    return ResultGenerator.gen_success_result(data=root_node.children)
 
 
 @project.put('/')
@@ -44,6 +96,7 @@ async def add_project(request: ProjectCreateRequest):
     project = await Project.add_project(project_dict)
     project_root = os.getcwd()
     upload_dir = os.path.join(project_root, "data", "Project", f"{project.project_id}")
+    os.makedirs(upload_dir, exist_ok=True)
     await Project.filter(project_id=project.project_id).update(store_path=upload_dir)
     project = await Project.get(project_id=project.project_id)
     return ResultGenerator.gen_success_result(message="创建项目成功", data=project)
