@@ -57,12 +57,10 @@ async def register_by_email(params: UserRegister):
     password = params.Password
     user_id = params.UserId
 
-    # 验证邮箱是否已注册
     existing_users = await User.find_by_email(email)
     if existing_users:
         raise HTTPException(status_code=400, detail="邮箱已被注册")
 
-    # 验证验证码
     if not is_verification_code_valid(email, verification_code):
         raise HTTPException(status_code=400, detail="验证码无效或已过期")
 

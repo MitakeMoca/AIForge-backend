@@ -53,15 +53,21 @@ async def add_model(
     return result
 
 
+@model_service.get('/public')
+async def find_all_public_model():
+    return ResultGenerator.gen_success_result(data=(await Model.find_all_public()))
+
+
+@model_service.get('/tags/{model_id}')
+async def get_all_tags_by_model(model_id: int):
+    tags = await Model.get_tags_by_model_id(model_id)
+    return ResultGenerator.gen_success_result(data=tags)
+
+
 @model_service.get('/{model_id}')
 async def get_model_by_id(model_id: int):
     model = await Model.find_by_id(model_id)
     return ResultGenerator.gen_success_result(data=model)
-
-
-@model_service.get('/public')
-async def find_all_public_model():
-    return ResultGenerator.gen_success_result(data=(await Model.find_all_public()))
 
 
 @model_service.get('/waiting')
