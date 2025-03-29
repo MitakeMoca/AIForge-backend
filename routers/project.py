@@ -4,7 +4,7 @@ from typing import Dict, Any, List
 from fastapi import APIRouter
 from pydantic import BaseModel
 
-from models import Project
+from models import Project, Model
 from utils.ResultGenerator import ResultGenerator
 
 project = APIRouter()
@@ -68,7 +68,7 @@ def build_file_tree(directory_path: str, project_id: int) -> TreeNode:
     return node
 
 
-@project.get("/tree/{project_id}", )
+@project.get("/tree/{project_id}")
 async def get_tree(project_id: int):
     project_root = os.getcwd()
     path = os.path.join(project_root, "data", "Project", f"{project_id}")
@@ -79,6 +79,37 @@ async def get_tree(project_id: int):
     root_node = build_file_tree(path, project_id)
 
     return ResultGenerator.gen_success_result(data=root_node.children)
+
+
+@project.put('/Docker/{project_id}')
+async def create_project_docker(project_id: int):
+    project = await Project.find_by_id(project_id)
+    if not project:
+        return ResultGenerator.gen_error_result(code=404, message="项目不存在")
+
+    model = await Model.find_by_id(project.model_id)
+    if not model:
+        return ResultGenerator.gen_error_result(code=404, message="模型不存在")
+
+    train_dataset = await find_dataset_by_id(project.train_dataset_id)
+    if not train_dataset:
+        return ["训练集不存在", "404"]
+
+    test_dataset = await find_dataset_by_id(project.test_dataset_id)
+    if not test_dataset:
+        return ["测试集不存在", "404"]
+
+    # 模拟调用 Docker 容器创建逻辑
+    result = await container_creator(
+        str(model.model_id),
+        project.project_id,
+        model.model_path,
+        project.store_path,
+        train_dataset.data_url,
+        test_dataset.data_url
+    )
+    return result
+
 
 
 @project.put('/')

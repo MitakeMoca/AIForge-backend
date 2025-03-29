@@ -15,7 +15,6 @@ hypara = APIRouter()
 
 
 class Hyperparameters(BaseModel):
-    # 定义请求体字段，假设字段是任意的，具体结构根据实际情况调整
     hyperparameters: dict
 
 
