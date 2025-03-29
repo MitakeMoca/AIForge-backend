@@ -1,6 +1,7 @@
+from typing import Optional
+
 import docker
 import os
-from concurrent.futures import ThreadPoolExecutor
 
 from utils.ImageList import ImageList
 from utils.ResultGenerator import ResultGenerator
@@ -28,55 +29,55 @@ class DockerCore:
                 self.container_name_to_id[name] = container_id
                 print(f"name: {name}, id: {container_id}")
 
-    def container_creator(self, image_name, project_id, gpu_needed, cpu_needed, port, model_path,
-                          project_store_path, train_dataset_store_path, test_dataset_store_path, project_dao_impl):
+    async def container_creator(self, image_name: str, project_id: int, gpu_need: Optional[int], cpu_need: Optional[int],
+                                port: int, model_path: str, project_store_path: str, train_dataset_store_path: str,
+                                test_dataset_store_path: str, project_dao_impl):
+
         warnings = []
         container_name = f"project_{project_id}"
 
-        # 检查资源是否足够
-        if gpu_needed is not None and gpu_needed + self.gpu_use > self.gpu_max:
-            warnings.append("GPU 资源不足，无法分配")
-        if cpu_needed is not None and cpu_needed + self.cpu_use > self.cpu_max:
-            warnings.append("CPU 资源不足，无法分配")
-        if not self.search_image(image_name + ":latest"):
-            warnings.append("镜像不存在")
+        if gpu_need and gpu_need + self.gpu_use > self.gpu_max:
+            return ResultGenerator.gen_fail_result("GPU 资源不足，无法分配")
+        if cpu_need and cpu_need + self.cpu_use > self.cpu_max:
+            return ResultGenerator.gen_fail_result("CPU 资源不足，无法分配")
+
+        # 镜像检查
+        if not ImageList.search_image(image_name + ":latest"):
+            return ResultGenerator.gen_fail_result("镜像不存在")
+
+        # 容器是否已存在检查
         if container_name in self.container_name_to_id:
-            warnings.append(f"容器 {container_name} 已存在")
-            warnings.append("403")
+            return ResultGenerator.gen_error_result(code=403, message=f"容器 {container_name} 已存在")
 
-        if not warnings:
-            binds = {
-                '/app/model': model_path,
-                '/app/Project': project_store_path,
-                '/app/Train_Dataset': train_dataset_store_path,
-                '/app/Test_Dataset': test_dataset_store_path
-            }
+        try:
+            # 创建容器
+            container = self.docker_client.containers.create(
+                image=f"{image_name}:latest",
+                name=container_name,
+                ports={80: port},
+                volumes={
+                    "/app/model": {"bind": model_path, "mode": "rw"},
+                    "/app/Project": {"bind": project_store_path, "mode": "rw"},
+                    "/app/Train_Dataset": {"bind": train_dataset_store_path, "mode": "rw"},
+                    "/app/Test_Dataset": {"bind": test_dataset_store_path, "mode": "rw"}
+                }
+            )
+            container.start()
 
-            try:
-                container = self.docker_client.containers.create(
-                    image_name,
-                    name=container_name,
-                    ports={80: port},  # 映射端口
-                    volumes=binds
-                )
-                container.start()
-                self.container_name_to_id[container_name] = container.id
+            # 更新状态
+            await project_dao_impl.update_project_status_by_id(project_id, "wait")
 
-                project_dao_impl.update_project_status_by_id(project_id, "wait")
+            # 更新资源使用情况
+            self.gpu_use += gpu_need if gpu_need else 0
+            self.cpu_use += cpu_need if cpu_need else 0
 
-                # 更新资源使用情况
-                self.gpu_use += gpu_needed or 0
-                self.cpu_use += cpu_needed or 0
+            self.container_name_to_id[container_name] = container.id
 
-                warnings.append(f"Success! Container Id 为 {container.id}")
-                warnings.append("200")
-            except docker.errors.DockerException as e:
-                warnings.append(f"容器创建失败: {str(e)}")
-                warnings.append("500")
-        else:
-            warnings.append("500")
+            return ResultGenerator.gen_success_result(f"Success! Container Id 为 {container.id}")
 
-        return warnings
+        except Exception as e:
+            return ResultGenerator.gen_error_result(code=500, message=f"容器创建失败: {str(e)}")
+
 
     def image_creator(self, image_name, pathname):
         """创建镜像并返回状态"""

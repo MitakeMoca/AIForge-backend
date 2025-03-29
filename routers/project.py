@@ -4,7 +4,9 @@ from typing import Dict, Any, List
 from fastapi import APIRouter
 from pydantic import BaseModel
 
-from models import Project, Model
+from models import Project, Model, Dataset
+from utils.DockerCore import DockerCore
+from utils.DockerFactory import DockerFactory
 from utils.ResultGenerator import ResultGenerator
 
 project = APIRouter()
@@ -91,16 +93,17 @@ async def create_project_docker(project_id: int):
     if not model:
         return ResultGenerator.gen_error_result(code=404, message="模型不存在")
 
-    train_dataset = await find_dataset_by_id(project.train_dataset_id)
+    train_dataset = await Dataset.find_by_id(project.train_dataset_id)
     if not train_dataset:
-        return ["训练集不存在", "404"]
+        return ResultGenerator.gen_error_result(code=404, message="训练集不存在")
 
-    test_dataset = await find_dataset_by_id(project.test_dataset_id)
+    test_dataset = await Dataset.find_by_id(project.test_dataset_id)
     if not test_dataset:
-        return ["测试集不存在", "404"]
+        return ResultGenerator.gen_error_result(code=404, message="测试集不存在")
 
+    docker = DockerFactory.docker_client_pool['tcp://localhost:2375']
     # 模拟调用 Docker 容器创建逻辑
-    result = await container_creator(
+    result = await docker.container_creator(
         str(model.model_id),
         project.project_id,
         model.model_path,
