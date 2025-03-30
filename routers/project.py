@@ -5,7 +5,6 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 
 from models import Project, Model, Dataset
-from utils.DockerCore import DockerCore
 from utils.DockerFactory import DockerFactory
 from utils.ResultGenerator import ResultGenerator
 
@@ -83,7 +82,7 @@ async def get_tree(project_id: int):
     return ResultGenerator.gen_success_result(data=root_node.children)
 
 
-@project.put('/Docker/{project_id}')
+@project.post('/Docker/{project_id}')
 async def create_project_docker(project_id: int):
     project = await Project.find_by_id(project_id)
     if not project:
@@ -104,15 +103,19 @@ async def create_project_docker(project_id: int):
     docker = DockerFactory.docker_client_pool['tcp://localhost:2375']
     # 模拟调用 Docker 容器创建逻辑
     result = await docker.container_creator(
-        str(model.model_id),
+        str(model.id),
         project.project_id,
+        None,
+        None,
+        5050,
         model.model_path,
         project.store_path,
         train_dataset.data_url,
-        test_dataset.data_url
+        test_dataset.data_url,
+        project
     )
+    print(f"create Docker result: {result}")
     return result
-
 
 
 @project.put('/')
@@ -140,6 +143,27 @@ async def add_project(request: ProjectCreateRequest):
 async def get_project(project_id: str):
     project = await Project.get(project_id=project_id)
     return ResultGenerator.gen_success_result(data=project)
+
+
+class RunProjectRequest(BaseModel):
+    project_id: int
+    command: str
+    hypara: Dict[str, Any]
+
+
+@project.post('/run')
+async def run_project_by_id(request: RunProjectRequest):
+    project_id = request.project_id
+    command = request.command
+    hypara = request.hypara
+    project = await Project.find_by_id(project_id)
+
+    if command == "predict.py":
+        result = await Project.predict(project_id, command, hypara)
+    else:
+        result = await Project.run_project(project_id, command, hypara)
+
+    return result
 
 
 @project.post('/projectType/{project_id}/{project_type}')

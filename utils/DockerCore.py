@@ -1,3 +1,4 @@
+import asyncio
 from typing import Optional
 
 import docker
@@ -5,6 +6,7 @@ import os
 
 from utils.ImageList import ImageList
 from utils.ResultGenerator import ResultGenerator
+from utils.WebSocketConfig import active_connections
 
 
 class DockerCore:
@@ -29,7 +31,8 @@ class DockerCore:
                 self.container_name_to_id[name] = container_id
                 print(f"name: {name}, id: {container_id}")
 
-    async def container_creator(self, image_name: str, project_id: int, gpu_need: Optional[int], cpu_need: Optional[int],
+    async def container_creator(self, image_name: str, project_id: int, gpu_need: Optional[int],
+                                cpu_need: Optional[int],
                                 port: int, model_path: str, project_store_path: str, train_dataset_store_path: str,
                                 test_dataset_store_path: str, project_dao_impl):
 
@@ -42,7 +45,9 @@ class DockerCore:
             return ResultGenerator.gen_fail_result("CPU 资源不足，无法分配")
 
         # 镜像检查
-        if not ImageList.search_image(image_name + ":latest"):
+        image_name = image_name + ":latest"
+        print(f"img_name:{image_name} {ImageList.image_list}")
+        if not ImageList.search_image(image_name):
             return ResultGenerator.gen_fail_result("镜像不存在")
 
         # 容器是否已存在检查
@@ -50,16 +55,19 @@ class DockerCore:
             return ResultGenerator.gen_error_result(code=403, message=f"容器 {container_name} 已存在")
 
         try:
+            model_path = model_path.replace("\\", "/")
+            print("构建镜像名:", image_name)
+            print(truncate_path_from_data(model_path))
             # 创建容器
             container = self.docker_client.containers.create(
-                image=f"{image_name}:latest",
+                image=image_name,
                 name=container_name,
                 ports={80: port},
                 volumes={
-                    "/app/model": {"bind": model_path, "mode": "rw"},
-                    "/app/Project": {"bind": project_store_path, "mode": "rw"},
-                    "/app/Train_Dataset": {"bind": train_dataset_store_path, "mode": "rw"},
-                    "/app/Test_Dataset": {"bind": test_dataset_store_path, "mode": "rw"}
+                    "/app/model": {"bind": truncate_path_from_data(model_path), "mode": "rw"},
+                    "/app/Project": {"bind": truncate_path_from_data(project_store_path), "mode": "rw"},
+                    "/app/Train_Dataset": {"bind": truncate_path_from_data(train_dataset_store_path), "mode": "rw"},
+                    "/app/Test_Dataset": {"bind": truncate_path_from_data(test_dataset_store_path), "mode": "rw"}
                 }
             )
             container.start()
@@ -77,7 +85,6 @@ class DockerCore:
 
         except Exception as e:
             return ResultGenerator.gen_error_result(code=500, message=f"容器创建失败: {str(e)}")
-
 
     def image_creator(self, image_name, pathname):
         """创建镜像并返回状态"""
@@ -131,38 +138,109 @@ class DockerCore:
         except docker.errors.DockerException as e:
             print(f"获取日志失败: {e}")
 
-    def exec_container_log(self, project_id, command, project_dao_impl):
-        """执行容器内的命令并获取日志"""
-        container_name = f"project_{project_id}"
-        try:
-            container = self.docker_client.containers.get(self.container_name_to_id[container_name])
-            result = container.exec_run(command, tty=False, stream=True)
-            for log in result:
-                print(log.decode("utf-8"))
-            project_dao_impl.update_project_status_by_id(project_id, "finished")
-        except docker.errors.DockerException as e:
-            project_dao_impl.update_project_status_by_id(project_id, "stopped")
-            print(f"执行命令失败: {e}")
+    async def exec_container_log(self, project_id, command, project_dao_impl):
+        from models import Project
+        container_id = f"project_{project_id}"
+        loop = asyncio.get_event_loop()
 
-    def stop_container(self, project_id, project_dao_impl):
-        """停止并删除容器"""
-        container_name = f"project_{project_id}"
         try:
-            container = self.docker_client.containers.get(self.container_name_to_id[container_name])
+            # 创建 exec 命令
+            exec_id = self.docker_client.api.exec_create(
+                container=container_id,
+                cmd=command.split(),
+                stdout=True,
+                stderr=True,
+                tty=False
+            )["Id"]
+
+            # 启动 exec 命令（注意：是同步生成器，所以要放到线程池里跑）
+            def _start_exec():
+                return self.docker_client.api.exec_start(exec_id, stream=True)
+
+            stream = await loop.run_in_executor(None, _start_exec)
+
+            # 读取输出（也放在 executor 中异步迭代）
+            for frame in stream:
+                message = frame.decode("utf-8").strip()
+                result = {"message": message}
+
+                # 模拟发送（这里只是打印）
+                print(f"[{container_id}] {result}")
+
+            # 成功结束，更新状态
+            await Project.update_project_status_by_id(project_id, "finished")
+            return ResultGenerator.gen_success_result(message='项目运行成功')
+        except Exception as e:
+            await self.stop_container(project_id, await Project.find_by_id(project_id))
+            print(f"[ERROR] moca {e}")
+            return ResultGenerator.gen_error_result(code=500, message=f"[ERROR] {e}")
+
+    async def stop_container(self, project_id: int, project):
+        from models import Project
+        container_name = f"project_{project_id}"
+
+        try:
+            containers = self.docker_client.containers.list(all=True)
+
+            # 输出所有容器的容器名称和容器 ID
+            print("当前 Docker 中的所有容器：")
+            for container in containers:
+                print(f"Container Name: {container.name}, Container ID: {container.id}, Status: {container.status}")
+            container = self.docker_client.containers.get(container_name)
             container.stop()
             container.remove()
+
+            # 更新项目状态
+            await Project.update_project_status_by_id(project_id, "stopped")
+
+            # 移除容器名记录
             self.container_name_to_id.pop(container_name, None)
-            project_dao_impl.update_project_status_by_id(project_id, "stopped")
-        except docker.errors.DockerException as e:
-            print(f"停止容器失败: {e}")
+
+            return ResultGenerator.gen_success_result(message=f"暂停容器 {container_name} 成功")
+
+        except Exception as e:
+            print(f"[ERROR] 停止容器失败: {e}")
+            return ResultGenerator.gen_error_result(code=500, message="停止容器时出错")
 
     def list_images(self):
         """列出所有镜像"""
         images = self.docker_client.images.list()
         result = []
         for image in images:
+            print(image)
             if image.tags:
-                result.append(image.tags[0])
+                for tag in image.tags:
+                    result.append(tag)
             else:
                 result.append("untagged")
         return result
+
+
+def windows_path_to_docker(windows_path: str) -> str:
+    # 替换盘符：D: -> d
+    drive, path_after_drive = os.path.splitdrive(windows_path)
+    drive_letter = drive[0].lower()
+    # 替换 \ 或 / 为 Linux 风格的 /
+    unix_style_path = path_after_drive.replace('\\', '/').lstrip('/')
+    # 拼接为 Docker 挂载路径
+    return f"/host_mnt/{drive_letter}/{unix_style_path}"
+
+
+# 工具字符串
+def truncate_path_from_data(volume_str: str) -> str:
+    """
+    处理形如 'D:/毕设/AIForge-backend/data/Model/57' 的路径，
+    保留从 /data 开始的部分，加上权限后缀。
+    """
+
+    # 统一分隔符，防止反斜杠干扰（Windows）
+    normalized_path = volume_str.replace('\\', '/')
+
+    # 找到 /data 开始的位置
+    index = normalized_path.lower().find('/data')
+    if index == -1:
+        raise ValueError("Path does not contain '/data'")
+
+    # 截取从 /data 开始的路径并加上模式
+    truncated = normalized_path[index:]
+    return truncated

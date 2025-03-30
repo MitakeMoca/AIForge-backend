@@ -4,11 +4,13 @@ from pathlib import Path
 from fastapi import HTTPException
 from tortoise import fields
 from datetime import datetime
-from typing import List, Dict
+from typing import List, Dict, Any
 from utils.DockerCore import DockerCore
 from models.basemodel import BaseModel  # 基类，假设BaseModel已经定义好
 from models.model import Model  # 假设Model模型已经定义
 from models.dataset import Dataset  # 假设Dataset模型已经定义
+from utils.DockerFactory import DockerFactory
+from utils.ResultGenerator import ResultGenerator
 
 
 class Project(BaseModel):
@@ -137,16 +139,19 @@ class Project(BaseModel):
         return {"container_id": container_id}
 
     @staticmethod
-    async def run_project(project_id: int, command: str, hypara: Dict[str, str]):
-        project = await Project.get(project_id=project_id)
-
-        docker_core = DockerCore()  # 使用DockerCore来管理容器
-        complete_command = f"python -u /app/model/Code/{command} "
-        for key, value in hypara.items():
-            complete_command += f"--{key} {value} "
-
-        result = docker_core.run_command(project.store_path, complete_command)
-        return {"logs": result}
+    async def run_project(project_id: int, command: str, hypara: Dict[str, Any]):
+        project = await Project.find_by_id(project_id)
+        if project:
+            docker = DockerFactory.docker_client_pool['tcp://localhost:2375']
+            complete_command = "python -u /app/model/Code/" + command + " "
+            for key, value in hypara.items():
+                complete_command += "--" + key + " " + value + " "
+            try:
+                return await docker.exec_container_log(project_id, complete_command, project)
+            except Exception as e:
+                print(f"exec_container_log error: {e}")
+        else:
+            return ResultGenerator.gen_error_result(code=404, message="项目不存在")
 
     @staticmethod
     async def stop_project(project_id: int):

@@ -5,8 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="849364cf-9649-4b6b-b839-39405f56f2ed" name="变更" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/AIForge-backend.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/AIForge-backend.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/models/project.py" beforeDir="false" afterPath="$PROJECT_DIR$/models/project.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/routers/project.py" beforeDir="false" afterPath="$PROJECT_DIR$/routers/project.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/utils/DockerCore.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils/DockerCore.py" afterDir="false" />
@@ -155,6 +155,11 @@
       <workItem from="1743222742261" duration="349000" />
       <workItem from="1743229822715" duration="5300000" />
       <workItem from="1743258740894" duration="3444000" />
+      <workItem from="1743269422552" duration="431000" />
+      <workItem from="1743302252127" duration="6315000" />
+      <workItem from="1743313062131" duration="7440000" />
+      <workItem from="1743321174130" duration="3712000" />
+      <workItem from="1743325349911" duration="1954000" />
     </task>
     <servers />
   </component>
