@@ -1,37 +1,24 @@
-from fastapi import WebSocket
+import json
+import uuid
 from typing import Dict, List
-import asyncio
+from fastapi import WebSocket
 
-active_connections = {
-    "topic": [],
-    "queue": []
-}
+active_connections: List[WebSocket] = []
+subscriptions: Dict[str, List[WebSocket]] = {}
 
 
-class WebSocketConfig:
-
-    @staticmethod
-    async def connect(websocket: WebSocket, channel: str):
-        await websocket.accept()
-        if channel not in active_connections:
-            active_connections[channel] = []
-        active_connections[channel].append(websocket)
-
-    @staticmethod
-    def disconnect(websocket: WebSocket, channel: str):
-        if channel in active_connections and websocket in active_connections[channel]:
-            active_connections[channel].remove(websocket)
-
-    @staticmethod
-    async def send_personal_message(message: str, websocket: WebSocket):
-        await websocket.send_text(message)
-
-    @staticmethod
-    async def broadcast(message: str, channel: str = "topic"):
-        connections = active_connections.get(channel, [])
-        for connection in connections:
-            try:
-                await connection.send_text(message)
-            except Exception:
-                # 可以做断线处理
-                pass
+async def broadcast_to_project(project_id: int, message: str):
+    """
+    向某个项目频道的所有订阅者广播消息
+    """
+    websockets = subscriptions[str(project_id)]
+    print(f"subscriptions: {subscriptions} {websockets} {project_id}")
+    if websockets is None:
+        print(f"[Warning] 没有订阅者，项目 {project_id} 的消息无法广播")
+        return
+    unique_string = str(uuid.uuid4())
+    for ws in websockets:
+        try:
+            await ws.send_text(json.dumps({"message_id": unique_string, 'message': message, 'type': "log"}))
+        except Exception as e:
+            print(f"[WebSocket] 发送失败: {e}")

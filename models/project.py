@@ -150,6 +150,7 @@ class Project(BaseModel):
                 return await docker.exec_container_log(project_id, complete_command, project)
             except Exception as e:
                 print(f"exec_container_log error: {e}")
+                return ResultGenerator.gen_error_result(code=500, message=f"项目运行失败{e}")
         else:
             return ResultGenerator.gen_error_result(code=404, message="项目不存在")
 

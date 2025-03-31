@@ -1,4 +1,5 @@
 import asyncio
+import time
 from typing import Optional
 
 import docker
@@ -6,7 +7,8 @@ import os
 
 from utils.ImageList import ImageList
 from utils.ResultGenerator import ResultGenerator
-from utils.WebSocketConfig import active_connections
+from docker.errors import NotFound, APIError
+from utils.WebSocketConfig import active_connections, broadcast_to_project
 
 
 class DockerCore:
@@ -51,8 +53,17 @@ class DockerCore:
             return ResultGenerator.gen_fail_result("镜像不存在")
 
         # 容器是否已存在检查
-        if container_name in self.container_name_to_id:
-            return ResultGenerator.gen_error_result(code=403, message=f"容器 {container_name} 已存在")
+        try:
+            existing = self.docker_client.containers.get(container_name)
+            print(f"检测到同名容器 {container_name} 存在，正在删除...")
+            if existing.status == "running":
+                existing.stop()
+            existing.remove(force=True)
+            print(f"容器 {container_name} 删除完成。")
+        except docker.errors.NotFound:
+            pass
+        except Exception as e:
+            return ResultGenerator.gen_error_result(code=500, message=f"容器清理失败: {str(e)}")
 
         try:
             model_path = model_path.replace("\\", "/")
@@ -63,9 +74,7 @@ class DockerCore:
                 image=image_name,
                 name=container_name,
                 tty=True,
-                stdout=True,
-                stderr=True,
-                detach=True
+                detach=True,
             )
             # 先创建但是还不运行
             # container.start()
@@ -143,32 +152,53 @@ class DockerCore:
         container = self.containers[container_name]
 
         try:
-            # 创建 exec 命令
-            exec_id = self.docker_client.api.exec_create(
-                container=container_id,
-                cmd=command.split(),
-                stdout=True,
-                stderr=True,
-                tty=False
-            )["Id"]
+            container.start()
+            print("容器启动！")
 
-            # 启动 exec 命令（注意：是同步生成器，所以要放到线程池里跑）
-            def _start_exec():
-                return self.docker_client.api.exec_start(exec_id, stream=True)
+            # 实时获取日志
+            # 日志利用 WebSocket 发送给前端
+            # 如果这里不要 buffer 的话，那么将一个字符作为一个消息传递给前端
+            buffer = ""
+            last_chunk_time = 0
 
-            stream = await loop.run_in_executor(None, _start_exec)
+            for line in container.logs(stream=True, follow=True):
+                chunk = line.decode()
+                buffer += chunk
 
-            # 读取输出（也放在 executor 中异步迭代）
-            for frame in stream:
-                message = frame.decode("utf-8").strip()
-                result = {"message": message}
+                now = time.time()
 
-                # 模拟发送（这里只是打印）
-                print(f"[{container_id}] {result}")
+                # 优先处理完整行
+                if '\n' in buffer:
+                    while '\n' in buffer:
+                        full_line, buffer = buffer.split('\n', 1)
+                        full_line = full_line.strip()
+                        print(full_line, buffer)
+                        await broadcast_to_project(project_id, full_line)
+                        last_chunk_time = 0  # 只在成功发送一行后才更新时间
+                elif last_chunk_time == 0:
+                    last_chunk_time = now
+                elif buffer.strip() and (last_chunk_time != 0) and (now - last_chunk_time > 1):
+                    flushed = buffer.strip()
+                    print(flushed)
+                    await broadcast_to_project(project_id, flushed)
+                    buffer = ""
+                    last_chunk_time = now
 
-            # 成功结束，更新状态
+
+
+            # 等待容器真正执行完成
+            container.reload()  # 更新容器状态
+            while container.status != 'exited':
+                await asyncio.sleep(1)
+                container.reload()
+
+            print("容器执行完毕，准备清理...")
+
             await Project.update_project_status_by_id(project_id, "finished")
+            container.stop()
+            container.remove()
             return ResultGenerator.gen_success_result(message='项目运行成功')
+
         except Exception as e:
             await self.stop_container(project_id, await Project.find_by_id(project_id))
             print(f"[ERROR] moca {e}")

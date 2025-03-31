@@ -4,6 +4,7 @@ from typing import List
 from fastapi import FastAPI, WebSocket, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
+from starlette.websockets import WebSocketDisconnect
 from tortoise.contrib.fastapi import register_tortoise
 from config.settings import TORTOISE_ORM
 from routers.user import user
@@ -14,7 +15,7 @@ from routers.pic import pic
 from routers.tags import tag
 from routers.project import project
 from routers.favor import favors
-from utils.WebSocketConfig import WebSocketConfig
+from utils.WebSocketConfig import active_connections, subscriptions
 
 app = FastAPI()
 app.include_router(user, prefix='/User', tags=['用户中心'])
@@ -44,38 +45,36 @@ register_tortoise(
 )
 
 
-# 用于存储已连接的客户端
-active_connections: List[WebSocket] = []
-
-# 用于存储每个项目的日志订阅
-subscriptions = {}
-
-
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     active_connections.append(websocket)
+
     while True:
-        data = await websocket.receive_text()  # 接收客户端的消息
-        message = json.loads(data)  # 解析 JSON 数据
+        data = await websocket.receive_text()
+        message = json.loads(data)
 
-        # 检查是否是订阅请求
-        if message.get("action") == "subscribe":
-            channel = message.get("channel")
-            if channel:
-                project_id = channel.split("_")[-1]  # 从频道名中提取 project_id
-                if project_id not in subscriptions:
-                    subscriptions[project_id] = []
-                subscriptions[project_id].append(websocket)
-                data = {
-                    "message": f"Subscribed to {channel}"
-                }
-                await websocket.send_text(json.dumps(data))  # 给客户端发送确认消息
+        try:
+            if message.get("action") == "subscribe":
+                channel = message.get("channel")
+                if channel:
+                    project_id = channel.split("_")[-1]
+                    print(project_id)
+                    if project_id not in subscriptions:
+                        subscriptions[project_id] = []
+                    subscriptions[project_id].append(websocket)
 
-        # 处理其他的消息（例如聊天或日志消息）
-        elif message.get("action") == "message":
-            # 处理接收到的其他消息
-            await websocket.send_text(f"Message received: {message['body']}")
+                    await websocket.send_text(json.dumps({
+                        "message": f"Subscribed to {channel}"
+                    }))
+                print(subscriptions)
+
+            elif message.get("action") == "message":
+                await websocket.send_text(f"Message received: {message['body']}")
+        except WebSocketDisconnect:
+            print(f"WebSocket 断开：{websocket.client}")
+            if websocket in active_connections:
+                active_connections.remove(websocket)
 
 
 if __name__ == '__main__':
