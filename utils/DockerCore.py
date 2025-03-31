@@ -13,6 +13,7 @@ class DockerCore:
     def __init__(self, docker_host):
         self.docker_client = docker.DockerClient(base_url=docker_host, timeout=None)
         self.container_name_to_id = {}  # 映射容器名称到容器 ID
+        self.containers = {}    # 映射容器名到容器
         self.cpu_max = 0
         self.cpu_use = 0  # CPU
         self.gpu_max = 0
@@ -36,7 +37,6 @@ class DockerCore:
                                 port: int, model_path: str, project_store_path: str, train_dataset_store_path: str,
                                 test_dataset_store_path: str, project_dao_impl):
 
-        warnings = []
         container_name = f"project_{project_id}"
 
         if gpu_need and gpu_need + self.gpu_use > self.gpu_max:
@@ -62,15 +62,13 @@ class DockerCore:
             container = self.docker_client.containers.create(
                 image=image_name,
                 name=container_name,
-                ports={80: port},
-                volumes={
-                    "/app/model": {"bind": truncate_path_from_data(model_path), "mode": "rw"},
-                    "/app/Project": {"bind": truncate_path_from_data(project_store_path), "mode": "rw"},
-                    "/app/Train_Dataset": {"bind": truncate_path_from_data(train_dataset_store_path), "mode": "rw"},
-                    "/app/Test_Dataset": {"bind": truncate_path_from_data(test_dataset_store_path), "mode": "rw"}
-                }
+                tty=True,
+                stdout=True,
+                stderr=True,
+                detach=True
             )
-            container.start()
+            # 先创建但是还不运行
+            # container.start()
 
             # 更新状态
             await project_dao_impl.update_project_status_by_id(project_id, "wait")
@@ -80,6 +78,7 @@ class DockerCore:
             self.cpu_use += cpu_need if cpu_need else 0
 
             self.container_name_to_id[container_name] = container.id
+            self.containers[container_name] = container
 
             return ResultGenerator.gen_success_result(f"Success! Container Id 为 {container.id}")
 
@@ -140,8 +139,8 @@ class DockerCore:
 
     async def exec_container_log(self, project_id, command, project_dao_impl):
         from models import Project
-        container_id = f"project_{project_id}"
-        loop = asyncio.get_event_loop()
+        container_name = f"project_{project_id}"
+        container = self.containers[container_name]
 
         try:
             # 创建 exec 命令
@@ -178,6 +177,7 @@ class DockerCore:
     async def stop_container(self, project_id: int, project):
         from models import Project
         container_name = f"project_{project_id}"
+        print(f"container_name: {project_id }")
 
         try:
             containers = self.docker_client.containers.list(all=True)

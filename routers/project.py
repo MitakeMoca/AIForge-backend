@@ -82,6 +82,13 @@ async def get_tree(project_id: int):
     return ResultGenerator.gen_success_result(data=root_node.children)
 
 
+@project.post('/stop/{project_id}')
+async def stop_project(project_id: int):
+    docker = DockerFactory.docker_client_pool['tcp://localhost:2375']
+    project = await Project.find_by_id(project_id)
+    return await docker.stop_container(project_id, project)
+
+
 @project.post('/Docker/{project_id}')
 async def create_project_docker(project_id: int):
     project = await Project.find_by_id(project_id)

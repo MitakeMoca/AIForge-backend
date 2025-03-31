@@ -1,34 +1,37 @@
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from fastapi.responses import HTMLResponse
-from typing import List
+from fastapi import WebSocket
+from typing import Dict, List
+import asyncio
 
-app = FastAPI()
-
-# 用于保存所有 WebSocket 连接的列表
-active_connections: List[WebSocket] = []
-
-
-@app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
-    # 允许指定的来源（对应 Spring 中的 .setAllowedOrigins）
-    await websocket.accept()
-    active_connections.append(websocket)
-    try:
-        while True:
-            # 接收消息
-            data = await websocket.receive_text()
-            print(f"Received message: {data}")
-
-            # 广播消息给所有连接的客户端
-            for connection in active_connections:
-                if connection != websocket:
-                    await connection.send_text(f"Message from another user: {data}")
-    except WebSocketDisconnect:
-        active_connections.remove(websocket)
-        print("Client disconnected")
+active_connections = {
+    "topic": [],
+    "queue": []
+}
 
 
-# 测试路由，确保 FastAPI 启动正常
-@app.get("/")
-async def read_root():
-    return {"message": "FastAPI WebSocket server is running."}
+class WebSocketConfig:
+
+    @staticmethod
+    async def connect(websocket: WebSocket, channel: str):
+        await websocket.accept()
+        if channel not in active_connections:
+            active_connections[channel] = []
+        active_connections[channel].append(websocket)
+
+    @staticmethod
+    def disconnect(websocket: WebSocket, channel: str):
+        if channel in active_connections and websocket in active_connections[channel]:
+            active_connections[channel].remove(websocket)
+
+    @staticmethod
+    async def send_personal_message(message: str, websocket: WebSocket):
+        await websocket.send_text(message)
+
+    @staticmethod
+    async def broadcast(message: str, channel: str = "topic"):
+        connections = active_connections.get(channel, [])
+        for connection in connections:
+            try:
+                await connection.send_text(message)
+            except Exception:
+                # 可以做断线处理
+                pass
