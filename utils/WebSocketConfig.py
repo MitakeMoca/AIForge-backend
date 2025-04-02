@@ -19,6 +19,6 @@ async def broadcast_to_project(project_id: int, message: str):
     unique_string = str(uuid.uuid4())
     for ws in websockets:
         try:
-            await ws.send_text(json.dumps({"message_id": unique_string, 'message': message, 'type': "log"}))
+            await ws.send_text(json.dumps({"message_id": unique_string, 'message': message, 'type': "log", "entry": 'info'}))
         except Exception as e:
             print(f"[WebSocket] 发送失败: {e}")
