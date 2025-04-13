@@ -149,7 +149,11 @@ class DockerCore:
     async def exec_container_log(self, project_id, command, project_dao_impl):
         from models import Project
         container_name = f"project_{project_id}"
+        print("moca")
+        print(self.containers)
+        print("moca")
         container = self.containers[container_name]
+        print("exec!")
 
         try:
             container.start()

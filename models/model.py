@@ -185,6 +185,7 @@ class Model(models.Model):
     # 给模型添加标签
     @classmethod
     async def add_tag_to_model(cls, model_id: int, tag_name: str) -> bool:
+        print(model_id, tag_name)
         # 查找 Tag 表中是否有对应 tag
         tag = await Tag.get_by_name(tag_name)
         if not tag:

@@ -6,7 +6,11 @@
   <component name="ChangeListManager">
     <list default="true" id="849364cf-9649-4b6b-b839-39405f56f2ed" name="变更" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/WebSocketConfig.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils/WebSocketConfig.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/models/model.py" beforeDir="false" afterPath="$PROJECT_DIR$/models/model.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/models/project.py" beforeDir="false" afterPath="$PROJECT_DIR$/models/project.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/routers/project.py" beforeDir="false" afterPath="$PROJECT_DIR$/routers/project.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/model.py" beforeDir="false" afterPath="$PROJECT_DIR$/services/model.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/DockerCore.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils/DockerCore.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -48,13 +52,13 @@
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
     &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
-    &quot;last_opened_file_path&quot;: &quot;D:/deep-learning-from-scratch-3&quot;,
+    &quot;last_opened_file_path&quot;: &quot;D:/Neural-Network&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
     &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
     &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
     &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;reference.settings.project.statistic.project.settings&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   },
   &quot;keyToStringList&quot;: {
@@ -165,6 +169,14 @@
       <workItem from="1743492791709" duration="900000" />
       <workItem from="1743502538377" duration="4468000" />
       <workItem from="1743566333336" duration="1585000" />
+      <workItem from="1743570335718" duration="613000" />
+      <workItem from="1743595854656" duration="749000" />
+      <workItem from="1744438000387" duration="1805000" />
+      <workItem from="1744520560387" duration="1161000" />
+      <workItem from="1744529460320" duration="3193000" />
+      <workItem from="1744533420239" duration="17000" />
+      <workItem from="1744541187112" duration="4572000" />
+      <workItem from="1744546292659" duration="4487000" />
     </task>
     <servers />
   </component>

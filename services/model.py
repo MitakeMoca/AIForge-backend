@@ -7,7 +7,7 @@ from pathlib import Path
 import docker
 from fastapi import UploadFile
 
-from models import Model, User
+from models import Model
 from utils.DockerFactory import DockerFactory
 from utils.ResultGenerator import ResultGenerator
 
@@ -29,7 +29,7 @@ async def add_model_service(model_dict: dict, model_file: UploadFile):
     print(model_dict)
     if not model_dict.get("user_id"):
         return ResultGenerator.gen_fail_result(message="添加模型失败，未指定所属用户")
-
+    from models.user import User
     if model_dict['user_id'] != '0' and (await User.filter(user_id=model_dict['user_id']).first() is None):
         print("添加模型失败：用户不存在")
         return ResultGenerator.gen_fail_result(message="用户不存在")
@@ -120,3 +120,31 @@ async def get_hypara_by_model_service(model_id: int):
         return ResultGenerator.gen_fail_result(message=f'读取文件失败{e}')
 
     return result
+
+
+async def add_model_without_file(model: Model):
+    """
+    添加模型，不需要上传文件
+    :param model: 模型对象
+    :return: 添加结果
+    """
+    from models.user import User
+    if not model.user_id:
+        return ResultGenerator.gen_fail_result(message="添加模型失败，未指定所属用户")
+
+    if model.user_id != '0' and (await User.filter(user_id=model.user_id).first() is None):
+        print("添加模型失败：用户不存在")
+        return ResultGenerator.gen_fail_result(message="用户不存在")
+
+    # 添加模型
+    upload_dir = os.path.join(os.getcwd(), "data", "Model", str(model.id))
+    model.model_path = upload_dir
+    await model.save()
+
+    tag_list = str(model.tag).split(",")
+    # 一次只能添加一个标签
+    for tag in tag_list:
+        if not await model.add_tag_to_model(model.id, tag):
+            return ResultGenerator.gen_fail_result(message="添加标签失败")
+
+    return model

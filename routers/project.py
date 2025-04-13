@@ -36,6 +36,11 @@ class TreeNode:
         return f"TreeNode(path={self.path}, type={self.type}, label={self.label}, children={self.children})"
 
 
+@project.put('/transfor2model/{project_id}')
+async def transfor_to_model(project_id: int):
+    return await Project.project_to_model(await Project.find_by_id(project_id))
+
+
 @project.get('/findByUserId/{user_id}')
 async def find_project_by_user(user_id: str):
     projects = await Project.find_by_user_id(user_id)

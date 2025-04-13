@@ -1,3 +1,4 @@
+import os
 import shutil
 from pathlib import Path
 
@@ -5,6 +6,8 @@ from fastapi import HTTPException
 from tortoise import fields
 from datetime import datetime
 from typing import List, Dict, Any
+
+from services.model import add_model_without_file
 from utils.DockerCore import DockerCore
 from models.basemodel import BaseModel  # 基类，假设BaseModel已经定义好
 from models.model import Model  # 假设Model模型已经定义
@@ -165,30 +168,51 @@ class Project(BaseModel):
     @staticmethod
     async def project_to_model(project: 'Project'):
         # 查找模型
-        model = await Model.get(model_id=project.model_id)
+        model = await Model.get(id=project.model_id)
 
         # 创建模型
         model_file = model.model_path
-        hypara_directory = "/root/data/Hypara/model/"
-        store_path = hypara_directory + Project.generate_unique_filename("json")
+        project_root = os.getcwd()
+        hypara_directory = os.path.join(project_root, 'data', 'Hypara', 'model')  # 连接相对路径
+        new_hypara = hypara_directory + Project.generate_unique_filename("json")
+        model_hypara = model.hypara_path
 
+        Path(hypara_directory).mkdir(parents=True, exist_ok=True)  # 创建目录
         # 复制模型超参数文件
-        new_hypara_path = hypara_directory + store_path
         try:
-            # 模拟复制操作
-            pass
-        except Exception as e:
-            return {"error": f"模型超参数文件复制失败: {str(e)}"}
+            shutil.copy(model_hypara, new_hypara)
+        except IOError as e:
+            return ResultGenerator.gen_fail_result(message=f"复制超参数文件失败: {str(e)}")
 
         # 创建新的模型
-        new_model = Model(
-            model_name=project.project_name,
-            model_description=project.description,
-            model_path=model_file,
-            hypara_path=new_hypara_path
-        )
-        await new_model.save()
-        return {"message": "项目转模型成功"}
+        model = await Model.add_model({
+            "model_name": project.project_name,
+            "model_description": project.description,
+            "model_overview_markdown": model.model_overview_markdown,
+            "frame": model.frame,
+            "image_id": model.image_id,
+            "user_id": project.user_id,
+            "pub": 0,
+            "hypara_path": new_hypara,
+            "model_date": datetime.now(),
+            "tag": model.tag,
+        })
+
+        model = await add_model_without_file(model)
+        print(model)
+        new_model_path = model.model_path
+        try:
+            # 复制模型文件
+            shutil.copytree(model_file, new_model_path)
+            project_file = project.store_path
+            # 复制项目文件
+            if os.path.exists(project_file):
+                shutil.rmtree(project_file)
+            shutil.copytree(new_model_path, project_file)  # 复制模型文件到项目目录
+        except IOError as e:
+            return ResultGenerator.gen_fail_result(message=f"复制模型文件失败: {str(e)}")
+
+        return ResultGenerator.gen_success_result(message="模型创建成功", data=model)
 
     @staticmethod
     def generate_unique_filename(extension: str):
@@ -196,20 +220,6 @@ class Project(BaseModel):
         import uuid
         return f"hypara_{uuid.uuid4()}_{int(datetime.now().timestamp())}.{extension}"
 
-    @staticmethod
-    async def copy_directory(source: Path, target: Path):
-        """Recursively copy a directory and its contents."""
-        # Check if the target directory exists, create if not
-        if not target.exists():
-            target.mkdir(parents=True, exist_ok=True)
-
-        # Iterate through the directory and copy files
-        for entry in source.iterdir():
-            target_path = target / entry.name
-            if entry.is_dir():
-                await Project.copy_directory(entry, target_path)  # Recurse for directories
-            else:
-                shutil.copy(entry, target_path)  # Copy files
 
     @staticmethod
     async def predict(project_id: int, command: str, hypara: Dict[str, str]):
