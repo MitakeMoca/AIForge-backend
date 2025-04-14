@@ -1,12 +1,20 @@
 from pathlib import Path
 
 from fastapi import APIRouter
-from starlette.responses import StreamingResponse
+from starlette.responses import StreamingResponse, FileResponse
 
 from models import User
 from utils.ResultGenerator import ResultGenerator
 
 pic = APIRouter()
+
+
+@pic.get("/path/{file_path}")
+async def download_by_path(file_path: str):
+    file_path = Path(file_path).resolve()
+
+    # 返回文件作为 Blob
+    return FileResponse(file_path, media_type="application/octet-stream", filename=file_path.name)
 
 
 @pic.get("/{user_id}")
