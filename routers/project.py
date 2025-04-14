@@ -48,14 +48,12 @@ async def find_project_by_user(user_id: str):
 
 
 @project.get('/file/{file_path}')
-async def get_file(project_id: int, file_path: str):
-    print(f"project_id: {project_id}, file_path: {file_path}")
-    project = await Project.find_by_id(project_id)
-    file_path = os.path.join(project.store_path, file_path)
+async def get_file(file_path: str):
+    print(f"file_path: {file_path}")
     if not os.path.exists(file_path):
         return ResultGenerator.gen_error_result(code=404, message="文件不存在")
 
-    with open(file_path, 'r') as file:
+    with open(file_path, 'r', encoding='utf-8') as file:
         content = file.read()
 
     return ResultGenerator.gen_success_result(data={"file_content": content})
