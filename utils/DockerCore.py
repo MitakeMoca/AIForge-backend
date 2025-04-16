@@ -4,6 +4,7 @@ from typing import Optional
 
 import docker
 import os
+import io
 
 from utils.ImageList import ImageList
 from utils.ResultGenerator import ResultGenerator
@@ -69,15 +70,16 @@ class DockerCore:
             model_path = model_path.replace("\\", "/")
             print("构建镜像名:", image_name)
             print(truncate_path_from_data(model_path))
-            # 创建容器
+            # 以交互模式创建容器
             container = self.docker_client.containers.create(
                 image=image_name,
                 name=container_name,
+                stdin_open=True,
                 tty=True,
                 detach=True,
             )
-            # 先创建但是还不运行
-            # container.start()
+            # 运行容器
+            container.start()
 
             # 更新状态
             await project_dao_impl.update_project_status_by_id(project_id, "wait")
@@ -149,16 +151,14 @@ class DockerCore:
     async def exec_container_log(self, project_id, command, project_dao_impl):
         from models import Project
         container_name = f"project_{project_id}"
-        print("moca")
-        print(self.containers)
-        print("moca")
         container = self.containers[container_name]
-        print("exec!")
+
+        socket = self.docker_client.api.attach_socket(container.id,
+                                                      params={'stdin': 1, 'stream': 1, 'stdout': 1, 'stderr': 1})
+        # 向容器发送命令
+        socket._sock.send("train\n".encode())
 
         try:
-            container.start()
-            print("容器启动！")
-
             # 实时获取日志
             # 日志利用 WebSocket 发送给前端
             # 如果这里不要 buffer 的话，那么将一个字符作为一个消息传递给前端
@@ -170,6 +170,9 @@ class DockerCore:
                 buffer += chunk
 
                 now = time.time()
+
+                if "TRAIN_COMPLETE" in buffer:
+                    break
 
                 # 优先处理完整行
                 if '\n' in buffer:
@@ -188,20 +191,11 @@ class DockerCore:
                     buffer = ""
                     last_chunk_time = now
 
-
-
             # 等待容器真正执行完成
             container.reload()  # 更新容器状态
-            while container.status != 'exited':
-                await asyncio.sleep(1)
-                container.reload()
-
-            print("容器执行完毕，准备清理...")
 
             await Project.update_project_status_by_id(project_id, "finished")
-            container.stop()
-            container.remove()
-            return ResultGenerator.gen_success_result(message='项目运行成功')
+            return ResultGenerator.gen_success_result(message='项目训练成功')
 
         except Exception as e:
             await self.stop_container(project_id, await Project.find_by_id(project_id))

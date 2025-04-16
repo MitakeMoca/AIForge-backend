@@ -7,6 +7,7 @@
     <list default="true" id="849364cf-9649-4b6b-b839-39405f56f2ed" name="变更" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/models/project.py" beforeDir="false" afterPath="$PROJECT_DIR$/models/project.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/DockerCore.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils/DockerCore.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -176,7 +177,7 @@
       <workItem from="1744598170950" duration="4144000" />
       <workItem from="1744635942571" duration="600000" />
       <workItem from="1744717565296" duration="804000" />
-      <workItem from="1744775327312" duration="3555000" />
+      <workItem from="1744775327312" duration="9667000" />
     </task>
     <servers />
   </component>
