@@ -1,4 +1,5 @@
 import asyncio
+import json
 import time
 from typing import Optional
 
@@ -6,6 +7,7 @@ import docker
 import os
 import io
 
+from models import Hypara
 from utils.ImageList import ImageList
 from utils.ResultGenerator import ResultGenerator
 from docker.errors import NotFound, APIError
@@ -155,8 +157,24 @@ class DockerCore:
 
         socket = self.docker_client.api.attach_socket(container.id,
                                                       params={'stdin': 1, 'stream': 1, 'stdout': 1, 'stderr': 1})
+
+        project = await Project.find_by_id(project_id)
+        hyper_parameters = {}
+        hyper_parameter_list = await Hypara.find_by_project_id(project_id)
+        print(hyper_parameter_list)
+        for file_path in hyper_parameter_list:
+            with open(file_path, 'r') as file:
+                data = json.load(file)
+                hyper_parameters.update(data)
+        hyper_parameters = json.dumps(hyper_parameters)
+        hyper_parameters += "\n"
+        print(hyper_parameters)
+
+        await Project.update_project_status_by_id(project_id, "running")
+
         # 向容器发送命令
         socket._sock.send("train\n".encode())
+        socket._sock.send(hyper_parameters.encode())
 
         try:
             # 实时获取日志
@@ -194,7 +212,7 @@ class DockerCore:
             # 等待容器真正执行完成
             container.reload()  # 更新容器状态
 
-            await Project.update_project_status_by_id(project_id, "finished")
+            await Project.update_project_status_by_id(project_id, "wait")
             return ResultGenerator.gen_success_result(message='项目训练成功')
 
         except Exception as e:
