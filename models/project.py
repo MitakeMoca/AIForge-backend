@@ -62,6 +62,21 @@ class Project(BaseModel):
         project = await Project.get(project_id=project_id)
         project.model_id = model_id
         await project.save()
+
+        # 将模型的文件拷贝到项目目录
+        model = await Model.get(id=model_id)
+        model_file = model.model_path
+        project_root = os.getcwd()
+        project_file = os.path.join(project_root, "data", "Project", str(project_id))
+        # 清空现有项目的目录
+        if os.path.exists(project_file):
+            shutil.rmtree(project_file)
+        # 复制模型文件到项目目录
+        try:
+            shutil.copytree(model_file, project_file)
+        except IOError as e:
+            print(f"Error copying model files: {e}")
+
         return {"detail": "Model ID updated"}
 
     @staticmethod
