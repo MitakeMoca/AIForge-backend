@@ -1,12 +1,28 @@
+import os
 from pathlib import Path
+from uuid import uuid4
 
-from fastapi import APIRouter
+from fastapi import APIRouter, UploadFile
 from starlette.responses import StreamingResponse, FileResponse
 
 from models import User
 from utils.ResultGenerator import ResultGenerator
 
 pic = APIRouter()
+
+
+@pic.post('/')
+async def upload_file(file: UploadFile):
+    if not file:
+        return ResultGenerator.gen_fail_result(message="没有选择文件")
+
+    upload_dir = os.getcwd()
+    name = f"{uuid4().hex}.png"
+    file_path = os.path.join(upload_dir, "data", "pic", name)
+    with open(file_path, "wb") as f:
+        f.write(file.file.read())
+
+    return ResultGenerator.gen_success_result(data={"file_path": f"/static/{name}"})
 
 
 @pic.get("/path/{file_path}")

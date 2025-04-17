@@ -4,6 +4,7 @@ from typing import List
 from fastapi import FastAPI, WebSocket, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
+from starlette.staticfiles import StaticFiles
 from starlette.websockets import WebSocketDisconnect
 from tortoise.contrib.fastapi import register_tortoise
 from config.settings import TORTOISE_ORM
@@ -43,6 +44,9 @@ register_tortoise(
     app=app,
     config=TORTOISE_ORM,
 )
+
+
+app.mount("/static", StaticFiles(directory="./data/pic"), name="static")
 
 
 @app.websocket("/ws")
