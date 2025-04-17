@@ -72,6 +72,10 @@ class DockerCore:
             model_path = model_path.replace("\\", "/")
             print("构建镜像名:", image_name)
             print(truncate_path_from_data(model_path))
+
+            host_dictionary_path = os.path.join(os.getcwd(), "data", "pic")
+            container_dictionary_path = "/app/pic"
+            volumes = {host_dictionary_path: {'bind': container_dictionary_path, 'mode': 'ro'}}
             # 以交互模式创建容器
             container = self.docker_client.containers.create(
                 image=image_name,
@@ -79,6 +83,7 @@ class DockerCore:
                 stdin_open=True,
                 tty=True,
                 detach=True,
+                volumes=volumes,
             )
             # 运行容器
             container.start()
@@ -150,7 +155,7 @@ class DockerCore:
         except docker.errors.DockerException as e:
             print(f"获取日志失败: {e}")
 
-    async def exec_container_log(self, project_id, command, project_dao_impl):
+    async def exec_container_log(self, project_id, command, hypara):
         from models import Project
         container_name = f"project_{project_id}"
         container = self.containers[container_name]
@@ -161,20 +166,22 @@ class DockerCore:
         project = await Project.find_by_id(project_id)
         hyper_parameters = {}
         hyper_parameter_list = await Hypara.find_by_project_id(project_id)
-        print(hyper_parameter_list)
         for file_path in hyper_parameter_list:
             with open(file_path, 'r') as file:
                 data = json.load(file)
                 hyper_parameters.update(data)
         hyper_parameters = json.dumps(hyper_parameters)
         hyper_parameters += "\n"
-        print(hyper_parameters)
 
         await Project.update_project_status_by_id(project_id, "running")
 
+        print(command, hypara)
         # 向容器发送命令
-        socket._sock.send("train\n".encode())
-        socket._sock.send(hyper_parameters.encode())
+        socket._sock.send(f"{command}\n".encode())
+        if(command == "train"):
+            socket._sock.send(hyper_parameters.encode())
+        else:
+            socket._sock.send(f"{hypara}\n".encode())
 
         try:
             # 实时获取日志
@@ -184,12 +191,15 @@ class DockerCore:
             last_chunk_time = 0
 
             for line in container.logs(stream=True, follow=True):
-                chunk = line.decode()
+                try:
+                    chunk = line.decode('utf-8')  # 尝试使用 UTF-8 解码
+                except UnicodeDecodeError:
+                    chunk = line.decode('gbk')  # 如果失败，尝试使用 ISO-8859-1 解码
                 buffer += chunk
 
                 now = time.time()
 
-                if "TRAIN_COMPLETE" in buffer:
+                if ("TRAIN_COMPLETE" in buffer) or ("PREDICT_COMPLETE" in buffer):
                     break
 
                 # 优先处理完整行
@@ -198,14 +208,14 @@ class DockerCore:
                         full_line, buffer = buffer.split('\n', 1)
                         full_line = full_line.strip()
                         print(full_line, buffer)
-                        await broadcast_to_project(project_id, full_line)
+                        await broadcast_to_project(project_id, full_line, command)
                         last_chunk_time = 0  # 只在成功发送一行后才更新时间
                 elif last_chunk_time == 0:
                     last_chunk_time = now
                 elif buffer.strip() and (last_chunk_time != 0) and (now - last_chunk_time > 1):
                     flushed = buffer.strip()
                     print(flushed)
-                    await broadcast_to_project(project_id, flushed)
+                    await broadcast_to_project(project_id, flushed, command)
                     buffer = ""
                     last_chunk_time = now
 
@@ -213,7 +223,7 @@ class DockerCore:
             container.reload()  # 更新容器状态
 
             await Project.update_project_status_by_id(project_id, "wait")
-            return ResultGenerator.gen_success_result(message='项目训练成功')
+            return ResultGenerator.gen_success_result(message=f'项目{ "推理完成" if command == "predict" else "训练完成"}')
 
         except Exception as e:
             await self.stop_container(project_id, await Project.find_by_id(project_id))

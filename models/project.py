@@ -161,11 +161,8 @@ class Project(BaseModel):
         project = await Project.find_by_id(project_id)
         if project:
             docker = DockerFactory.docker_client_pool['tcp://localhost:2375']
-            complete_command = "python -u /app/model/Code/" + command + " "
-            for key, value in hypara.items():
-                complete_command += "--" + key + " " + value + " "
             try:
-                return await docker.exec_container_log(project_id, complete_command, project)
+                return await docker.exec_container_log(project_id, command, hypara)
             except Exception as e:
                 print(f"exec_container_log error: {e}")
                 return ResultGenerator.gen_error_result(code=500, message=f"项目运行失败{e}")
@@ -238,23 +235,13 @@ class Project(BaseModel):
 
     @staticmethod
     async def predict(project_id: int, command: str, hypara: Dict[str, str]):
+        docker = DockerFactory.docker_client_pool['tcp://localhost:2375']
+        file_name = hypara['file_path'].split('/')[-1]
+        file_path = f"/app/pic/{file_name}"
+        print(file_path)
         try:
-            project = await Project.get(project_id=project_id)
-
-            model = await Model.get(model_id=project.model_id)
-
-            docker_core = DockerCore()
-
-            complete_command = f"python -u /app/model/Code/{command} "
-            for key, value in hypara.items():
-                complete_command += f"--{key} {value} "
-
-            complete_command += f"--model {model.model_path}"
-
-            result = docker_core.run_command(project.store_path, complete_command)
-
-            return {"result": result}
-
+            return await docker.exec_container_log(project_id, command, file_path)
         except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
+            print(f"exec_container_log error: {e}")
+            return ResultGenerator.gen_error_result(code=500, message=f"项目运行失败{e}")
 

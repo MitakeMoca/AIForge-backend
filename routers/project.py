@@ -182,7 +182,7 @@ async def run_project_by_id(request: RunProjectRequest):
     hypara = request.hypara
     project = await Project.find_by_id(project_id)
 
-    if command == "predict.py":
+    if command == "predict":
         result = await Project.predict(project_id, command, hypara)
     else:
         result = await Project.run_project(project_id, command, hypara)

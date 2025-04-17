@@ -7,7 +7,7 @@ active_connections: List[WebSocket] = []
 subscriptions: Dict[str, List[WebSocket]] = {}
 
 
-async def broadcast_to_project(project_id: int, message: str):
+async def broadcast_to_project(project_id: int, message: str, command: str):
     """
     向某个项目频道的所有订阅者广播消息
     """
@@ -17,8 +17,12 @@ async def broadcast_to_project(project_id: int, message: str):
         print(f"[Warning] 没有订阅者，项目 {project_id} 的消息无法广播")
         return
     unique_string = str(uuid.uuid4())
+    type = {
+        "train": "log",
+        "predict": "chat",
+    }
     for ws in websockets:
         try:
-            await ws.send_text(json.dumps({"message_id": unique_string, 'message': message, 'type': "log", "entry": 'info'}))
+            await ws.send_text(json.dumps({"message_id": unique_string, 'message': message, 'type': type[command], "entry": 'info'}))
         except Exception as e:
             print(f"[WebSocket] 发送失败: {e}")
