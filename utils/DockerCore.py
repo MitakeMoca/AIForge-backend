@@ -74,8 +74,11 @@ class DockerCore:
             print(truncate_path_from_data(model_path))
 
             host_dictionary_path = os.path.join(os.getcwd(), "data", "pic")
+            host_dictionary_path2 = os.path.join(os.getcwd(), "data", "dataset")
             container_dictionary_path = "/app/pic"
-            volumes = {host_dictionary_path: {'bind': container_dictionary_path, 'mode': 'ro'}}
+            container_dictionary_path2 = "/app/dataset"
+            volumes = {host_dictionary_path: {'bind': container_dictionary_path, 'mode': 'ro'},
+                       host_dictionary_path2: {'bind': container_dictionary_path2, 'mode': 'ro'}}
             # 以交互模式创建容器
             container = self.docker_client.containers.create(
                 image=image_name,
@@ -160,6 +163,7 @@ class DockerCore:
         container_name = f"project_{project_id}"
         container = self.containers[container_name]
 
+        print(container.id)
         socket = self.docker_client.api.attach_socket(container.id,
                                                       params={'stdin': 1, 'stream': 1, 'stdout': 1, 'stderr': 1})
 
@@ -170,16 +174,20 @@ class DockerCore:
             with open(file_path, 'r') as file:
                 data = json.load(file)
                 hyper_parameters.update(data)
+
+        hyper_parameters['train_dataset_id'] = project.train_dataset_id
+        hyper_parameters['test_dataset_id'] = project.test_dataset_id
         hyper_parameters = json.dumps(hyper_parameters)
         hyper_parameters += "\n"
 
         await Project.update_project_status_by_id(project_id, "running")
 
-        print(command, hypara)
+        print(command, hypara, hyper_parameters)
         # 向容器发送命令
         socket._sock.send(f"{command}\n".encode())
-        if(command == "train"):
+        if command == "train":
             socket._sock.send(hyper_parameters.encode())
+            socket._sock.send("\n".encode())
         else:
             socket._sock.send(f"{hypara}\n".encode())
 
@@ -191,10 +199,7 @@ class DockerCore:
             last_chunk_time = 0
 
             for line in container.logs(stream=True, follow=True):
-                try:
-                    chunk = line.decode('utf-8')  # 尝试使用 UTF-8 解码
-                except UnicodeDecodeError:
-                    chunk = line.decode('gbk')  # 如果失败，尝试使用 ISO-8859-1 解码
+                chunk = line.decode('utf-8', errors='ignore')
                 buffer += chunk
 
                 now = time.time()
@@ -207,15 +212,17 @@ class DockerCore:
                     while '\n' in buffer:
                         full_line, buffer = buffer.split('\n', 1)
                         full_line = full_line.strip()
-                        print(full_line, buffer)
-                        await broadcast_to_project(project_id, full_line, command)
+                        if full_line:
+                            print(full_line, buffer)
+                            await broadcast_to_project(project_id, full_line, command)
                         last_chunk_time = 0  # 只在成功发送一行后才更新时间
                 elif last_chunk_time == 0:
                     last_chunk_time = now
                 elif buffer.strip() and (last_chunk_time != 0) and (now - last_chunk_time > 1):
                     flushed = buffer.strip()
-                    print(flushed)
-                    await broadcast_to_project(project_id, flushed, command)
+                    if flushed:
+                        print(flushed)
+                        await broadcast_to_project(project_id, flushed, command)
                     buffer = ""
                     last_chunk_time = now
 

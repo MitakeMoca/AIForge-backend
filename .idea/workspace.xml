@@ -7,9 +7,7 @@
     <list default="true" id="849364cf-9649-4b6b-b839-39405f56f2ed" name="变更" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/models/project.py" beforeDir="false" afterPath="$PROJECT_DIR$/models/project.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/routers/project.py" beforeDir="false" afterPath="$PROJECT_DIR$/routers/project.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/utils/DockerCore.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils/DockerCore.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/WebSocketConfig.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils/WebSocketConfig.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -51,7 +49,7 @@
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
     &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
-    &quot;last_opened_file_path&quot;: &quot;D:/model/Neural-Network&quot;,
+    &quot;last_opened_file_path&quot;: &quot;D:/DeepSeek-V3&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
     &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
@@ -184,6 +182,12 @@
       <workItem from="1744857243774" duration="1271000" />
       <workItem from="1744866139871" duration="1977000" />
       <workItem from="1744884521088" duration="7156000" />
+      <workItem from="1744896578257" duration="689000" />
+      <workItem from="1745029529372" duration="2661000" />
+      <workItem from="1745144210466" duration="1075000" />
+      <workItem from="1745149223012" duration="1583000" />
+      <workItem from="1745212087123" duration="14968000" />
+      <workItem from="1745293607698" duration="3199000" />
     </task>
     <servers />
   </component>

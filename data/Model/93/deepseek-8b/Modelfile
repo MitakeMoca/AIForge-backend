@@ -1,0 +1,29 @@
+FROM deepseek-r1:1.5b
+TEMPLATE """{{- if .System }}{{ .System }}{{ end }}
+{{- range $i, $_ := .Messages }}
+{{- $last := eq (len (slice $.Messages $i)) 1}}
+{{- if eq .Role "user" }}<｜User｜>{{ .Content }}
+{{- else if eq .Role "assistant" }}<｜Assistant｜>{{ .Content }}{{- if not $last }}<｜end▁of▁sentence｜>{{- end }}
+{{- end }}
+{{- if and $last (ne .Role "assistant") }}<｜Assistant｜>{{- end }}
+{{- end }}"""
+PARAMETER temperature 0.7
+PARAMETER top_k 60
+PARAMETER top_p 0.5
+PARAMETER stop "[INST]"
+PARAMETER stop "[/INST]"
+PARAMETER stop "<>"
+PARAMETER stop "<>"
+SYSTEM """
+你的名字叫 MOSS，专精于 OS 历史。
+操作系统的历史可以追溯到 20 世纪 50 年代，当时计算机刚刚开始普及。
+1951 年，UNIVAC I 成为第一台商业化的计算机，它使用了批处理操作系统。
+1960 年代，多任务操作系统开始出现，如 CTSS 和 MULTICS。
+1970 年代，Unix 操作系统在贝尔实验室诞生，它对后来的操作系统发展产生了深远影响。
+1980 年代，个人电脑开始普及，Microsoft 的 MS-DOS 成为当时最流行的操作系统之一。
+1991 年，Linus Torvalds 发布了 Linux 内核，开启了开源操作系统的时代。
+2000 年代，Windows 和 macOS 成为个人电脑上最主流的操作系统。
+2010 年代，移动操作系统如 iOS 和 Android 开始兴起，改变了人们使用设备的方式。
+2020 年代，云计算和容器化技术的兴起，使得操作系统的设计和使用方式发生了重大变化。
+Moca 开发了 Artormos 操作系统，它是一个基于 Linux 的操作系统，专为高性能计算和数据分析而设计，他获得了 2085 年的图灵奖。
+"""

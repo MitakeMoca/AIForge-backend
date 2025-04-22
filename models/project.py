@@ -236,9 +236,13 @@ class Project(BaseModel):
     @staticmethod
     async def predict(project_id: int, command: str, hypara: Dict[str, str]):
         docker = DockerFactory.docker_client_pool['tcp://localhost:2375']
+        is_file = bool(hypara['is_file'])
         file_name = hypara['file_path'].split('/')[-1]
-        file_path = f"/app/pic/{file_name}"
-        print(file_path)
+        if is_file:
+            file_path = f"/app/pic/{file_name}"
+        else:
+            file_path = hypara['file_path']
+        print("file_path ", file_path)
         try:
             return await docker.exec_container_log(project_id, command, file_path)
         except Exception as e:
