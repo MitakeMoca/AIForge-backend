@@ -5,9 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="849364cf-9649-4b6b-b839-39405f56f2ed" name="变更" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/models/project.py" beforeDir="false" afterPath="$PROJECT_DIR$/models/project.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/routers/project.py" beforeDir="false" afterPath="$PROJECT_DIR$/routers/project.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/Hypara/project/37.json" beforeDir="false" afterPath="$PROJECT_DIR$/data/Hypara/project/37.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/rag.py" beforeDir="false" afterPath="$PROJECT_DIR$/services/rag.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -18,6 +19,7 @@
     <option name="RECENT_TEMPLATES">
       <list>
         <option value="Python Script" />
+        <option value="Jupyter Notebook" />
       </list>
     </option>
   </component>
@@ -190,7 +192,9 @@
       <workItem from="1745293607698" duration="6370000" />
       <workItem from="1745331459410" duration="1008000" />
       <workItem from="1745377730056" duration="1549000" />
-      <workItem from="1745382762583" duration="1431000" />
+      <workItem from="1745382762583" duration="7231000" />
+      <workItem from="1745406323254" duration="4729000" />
+      <workItem from="1745413407796" duration="4373000" />
     </task>
     <servers />
   </component>
