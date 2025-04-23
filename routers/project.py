@@ -212,3 +212,9 @@ async def update_train_dataset(project_id: int, dataset_id: int):
 async def update_test_dataset(project_id: int, dataset_id: int):
     await Project.update_test_dataset_id_by_id(project_id, dataset_id)
     return ResultGenerator.gen_success_result(message="设置项目测试集成功")
+
+
+@project.post('/field/{project_id}/{field_name}')
+async def update_project_field(project_id: int, field_name: str):
+    await Project.update_project_field_by_id(project_id, field_name)
+    return ResultGenerator.gen_success_result(message="设置项目字段成功")

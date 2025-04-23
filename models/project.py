@@ -30,6 +30,7 @@ class Project(BaseModel):
     test_dataset_id = fields.IntField()
     store_path = fields.CharField(max_length=255, default="")
     project_type = fields.CharField(max_length=100)
+    project_field = fields.CharField(max_length=100, default="No field")
 
     class Meta:
         table = "project"
@@ -127,6 +128,13 @@ class Project(BaseModel):
         project.project_type = project_type
         await project.save()
         return {"detail": "Project type updated"}
+
+    @staticmethod
+    async def update_project_field_by_id(project_id: int, project_field: str):
+        project = await Project.get(project_id=project_id)
+        project.project_field = project_field
+        await project.save()
+        return {"detail": "Project field updated"}
 
     @staticmethod
     async def delete_by_id(project_id: int):
