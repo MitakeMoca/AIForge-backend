@@ -1,0 +1,72 @@
+# 包环境
+venv/
+env/
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# 快速应用生成的文件
+*.log
+*.tmp
+*.swp
+
+# 数据库文件
+*.db
+*.sqlite3
+
+# 编辑器相关的文件
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# 虚拟环境和Python相关
+venv/
+env/
+__pycache__/
+*.py[cod]
+*.egg
+*.egg-info/
+dist/
+build/
+*.spec
+*.egg
+*.egg-info/
+.egg
+*.egg-info/
+*.egg-metadata
+*.dist-info/
+*.whl
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# FastAPI相关的文件
+/docs
+/openapi.json
+
+# 其他常见的忽略文件
+*.DS_Store
+*.env
+.env.*
+.flaskenv
+.flask-config.json
+docker-compose.override.yml
+
+# 日志文件
+logs/
+*.log
+
+# 上传文件夹
+uploads/
+static/
+
+# 单元测试文件
+htmlcov/
+coverage.xml
+.nosetests
+
+# PyInstaller
+*.spec
+dist/
+build/
