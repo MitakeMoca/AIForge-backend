@@ -14,6 +14,7 @@ from models.model import Model  # 假设Model模型已经定义
 from models.dataset import Dataset  # 假设Dataset模型已经定义
 from utils.DockerFactory import DockerFactory
 from utils.ResultGenerator import ResultGenerator
+from utils.OtherUtil import generate_secret_key
 
 
 class Project(BaseModel):
@@ -216,10 +217,10 @@ class Project(BaseModel):
             "hypara_path": new_hypara,
             "model_date": datetime.now(),
             "tag": model.tag,
+            "secret_key": f"sk-{generate_secret_key()}"
         })
 
         model = await add_model_without_file(model)
-        print(model)
         new_model_path = model.model_path
         try:
             # 复制模型文件

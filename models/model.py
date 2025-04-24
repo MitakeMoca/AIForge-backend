@@ -20,6 +20,7 @@ class Model(models.Model):
     user_id = fields.CharField(max_length=255)
     hypara_path = fields.CharField(max_length=255)
     tag = fields.CharField(max_length=255)
+    secret_key = fields.CharField(max_length=255, default='MitakeMoca')
 
     class Meta:
         table = "model"

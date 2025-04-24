@@ -8,14 +8,14 @@ from langchain_community.embeddings import HuggingFaceBgeEmbeddings
 import torch
 import os
 import warnings
+import pickle
+
 warnings.filterwarnings("ignore")
 loaders = []
 
-import pickle
 
 def update_loaders(folder_path, save_path=None):
     pdf_files = [os.path.join(folder_path, file) for file in os.listdir(folder_path) if file.endswith(".pdf")]
-    loaders = []
     for pdf_file in pdf_files:
         loader = PyPDFLoader(pdf_file)
         loaders.append(loader)
@@ -24,6 +24,7 @@ def update_loaders(folder_path, save_path=None):
         with open(save_path, 'wb') as f:
             pickle.dump(loaders, f)
     return loaders
+
 
 class RAG:
     def __init__(self):
@@ -35,7 +36,6 @@ class RAG:
             "D:\\毕设\\AIForge-backend\\data\\paper\\Main Memory",
             "D:\\毕设\\AIForge-backend\\data\\paper\\Memory management"
         ]
-        loaders = []
         for folder_path in loader_files:
             # 尝试加载保存的 loaders 文件
             save_path = os.path.join(folder_path, "loaders.pkl")
@@ -47,7 +47,7 @@ class RAG:
                 # 如果保存的文件不存在，则重新生成并保存
                 loader_batch = update_loaders(folder_path, save_path)
                 loaders.extend(loader_batch)
-        print("step 0")
+        print("step 0")./
         self.model_kwargs = {"device": "cuda" if torch.cuda.is_available() else "cpu"}
         self.model_name = "BAAI/bge-small-en"
         self.encode_kwargs = {"normalize_embeddings": True}
