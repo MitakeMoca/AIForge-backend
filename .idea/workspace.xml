@@ -5,12 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="849364cf-9649-4b6b-b839-39405f56f2ed" name="变更" comment="">
-      <change afterPath="$PROJECT_DIR$/utils/OtherUtil.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/routers/api.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/data/Project/60/deepseek-8b/predict.py" beforeDir="false" afterPath="$PROJECT_DIR$/data/Project/60/deepseek-8b/predict.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/models/model.py" beforeDir="false" afterPath="$PROJECT_DIR$/models/model.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/models/project.py" beforeDir="false" afterPath="$PROJECT_DIR$/models/project.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/rag.py" beforeDir="false" afterPath="$PROJECT_DIR$/services/rag.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -199,6 +196,7 @@
       <workItem from="1745413407796" duration="4494000" />
       <workItem from="1745421230272" duration="299000" />
       <workItem from="1745462034235" duration="1680000" />
+      <workItem from="1745470186254" duration="1254000" />
     </task>
     <servers />
   </component>

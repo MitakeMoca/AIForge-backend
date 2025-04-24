@@ -16,6 +16,7 @@ from routers.pic import pic
 from routers.tags import tag
 from routers.project import project
 from routers.favor import favors
+from routers.api import api
 from utils.WebSocketConfig import active_connections, subscriptions
 
 app = FastAPI()
@@ -27,6 +28,7 @@ app.include_router(pic, prefix='/Pic', tags=['图像管理'])
 app.include_router(tag, prefix='/Tags', tags=['标签管理'])
 app.include_router(project, prefix='/Project', tags=['项目管理'])
 app.include_router(favors, prefix='/Favors', tags=['收藏管理'])
+app.include_router(api, prefix='/api', tags=['接口化服务'])
 
 origins = [
     '*'
