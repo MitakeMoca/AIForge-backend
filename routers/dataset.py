@@ -2,6 +2,7 @@ import os
 import zipfile
 from pathlib import Path
 from typing import Optional
+from io import BytesIO
 
 from fastapi import APIRouter, UploadFile, Form, File
 from pydantic import BaseModel
@@ -93,6 +94,78 @@ def unzip_file(zip_file_path: Path, target_dir: Path):
     # 解压 ZIP 文件到指定目录
     with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
         zip_ref.extractall(target_dir)
+
+
+@dataset.get('/files/{dataset_id}')
+async def get_dataset_files(dataset_id: str):
+    dictionary_path = os.getcwd()
+    dataset_dir = os.path.join(dictionary_path, "data", "dataset", dataset_id)
+    file_tree = get_file_tree(dataset_dir)
+    return ResultGenerator.gen_success_result(data=file_tree)
+
+
+@dataset.get('/download/{dataset_id}')
+async def download_dataset(dataset_id: str):
+    dictionary_path = os.getcwd()
+    dataset_dir = os.path.join(dictionary_path, "data", "dataset", dataset_id)
+    zip_buffer = BytesIO()
+    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        # 遍历目录并添加文件到 ZIP
+        for root, dirs, files in os.walk(dataset_dir):
+            for file in files:
+                file_path = os.path.join(root, file)
+                arcname = os.path.relpath(file_path, dataset_dir)
+                zipf.write(file_path, arcname)
+    zip_buffer.seek(0)
+    return ResultGenerator.gen_success_result(data=zip_buffer.getvalue())
+
+
+def get_file_tree(directory_path):
+    # 获取目录名称
+    directory_name = os.path.basename(directory_path)
+    # 初始化文件树字典
+    tree = {
+        "name": directory_name,
+        "type": "directory",
+        "children": []
+    }
+
+    # 遍历目录内容
+    try:
+        # 列出目录中的所有文件和子目录
+        entries = os.scandir(directory_path)
+        for entry in entries:
+            # 如果是子目录，递归获取其文件树
+            if entry.is_dir():
+                subtree = get_file_tree(entry.path)
+                tree["children"].append(subtree)
+            # 如果是文件，获取文件信息
+            else:
+                file_info = {
+                    "name": entry.name,
+                    "type": "file",
+                    "size": format_file_size(entry.stat().st_size)
+                }
+                tree["children"].append(file_info)
+        return tree
+    except Exception as e:
+        print(f"Error reading directory {directory_path}: {e}")
+        return None
+
+
+def format_file_size(size_bytes):
+    # 定义文件大小单位
+    units = ['B', 'KB', 'MB', 'GB', 'TB']
+    # 找到合适的单位
+    unit_index = 0
+    while size_bytes >= 1024 and unit_index < len(units) - 1:
+        size_bytes /= 1024.0
+        unit_index += 1
+    # 格式化文件大小
+    if unit_index == 0:
+        return f"{size_bytes} {units[unit_index]}"
+    else:
+        return f"{size_bytes: .2f} {units[unit_index]}"
 
 
 @dataset.get('/public')
