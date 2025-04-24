@@ -1,6 +1,7 @@
 from typing import Optional
 
 from fastapi import APIRouter, Form, UploadFile, File
+from langchain_community.chat_models import ChatOpenAI
 from pydantic import BaseModel
 
 from models.model import Model
@@ -73,6 +74,20 @@ async def get_model_by_id(model_id: int):
 @model_service.get('/waiting')
 async def find_all_waiting_model():
     return ResultGenerator.gen_success_result(data=(await Model.find_all_waiting()))
+
+
+@model_service.post('/ragnork/{prompt}')
+async def ragnork(prompt: str):
+    chat = ChatOpenAI(
+        model='deepseek-chat',
+        openai_api_key='sk-b71092665ded4282aa3ed6b6aab01ae4',
+        openai_api_base='https://api.deepseek.com',
+        max_tokens=1024,
+        temperature=0.0
+    )
+
+    response = chat.invoke(prompt)
+    return ResultGenerator.gen_success_result(data=response.content)
 
 
 @model_service.post('/waiting/{model_id}')
