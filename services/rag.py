@@ -64,7 +64,7 @@ class RAG:
         # 必须再传个 llm
         self.llm = ChatOpenAI(
             model='deepseek-chat',
-            openai_api_key='sk-b71092665ded4282aa3ed6b6aab01ae4',
+            openai_api_key='your-api-key',
             openai_api_base='https://api.deepseek.com',
             max_tokens=8192,
             temperature=0.0
