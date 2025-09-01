@@ -18,6 +18,7 @@ from routers.project import project
 from routers.favor import favors
 from routers.api import api
 from utils.WebSocketConfig import active_connections, subscriptions
+import numpy as np
 
 app = FastAPI()
 app.include_router(user, prefix='/User', tags=['用户中心'])
