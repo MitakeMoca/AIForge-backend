@@ -3,10 +3,10 @@ TORTOISE_ORM = {
         "default": {
             "engine": "tortoise.backends.mysql",
             "credentials": {
-                "host": "bj-cynosdbmysql-grp-dpk6czhw.sql.tencentcdb.com",
+                "host": "host",
                 "port": "24660",
                 "user": "root",
-                "password": "Holmes@114514",
+                "password": "password",
                 "database": "aiforge",
                 "charset": "utf8mb4",
                 "autocommit": True,
