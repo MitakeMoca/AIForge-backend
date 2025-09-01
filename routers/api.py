@@ -12,7 +12,7 @@ async def api_service(model_id: int, secret_key: str, prompt: str):
         return ResultGenerator.gen_fail_result(message="密钥错误")
     llm = ChatOpenAI(
         model='deepseek-chat',
-        openai_api_key='sk-b71092665ded4282aa3ed6b6aab01ae4',
+        openai_api_key='your_api_key',
         openai_api_base='https://api.deepseek.com',
         max_tokens=8192,
         temperature=0.0
